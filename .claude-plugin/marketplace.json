@@ -1,0 +1,22 @@
+{
+  "name": "xiuxiu-agent-skills",
+  "owner": {
+    "name": "Xiuxiu",
+    "email": ""
+  },
+  "metadata": {
+    "description": "Reusable agent skills for delegation, review, and engineering workflows",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "engineering-skills",
+      "description": "Skills for reviewing delegation readiness and engineering workflow quality",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/delegation-review"
+      ]
+    }
+  ]
+}

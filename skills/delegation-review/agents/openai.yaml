@@ -1,0 +1,3 @@
+display_name: Delegation Review
+short_description: Review whether work is ready for autonomous agent handoff.
+default_prompt: Use delegation-review to assess this project or issue set for unsupervised agent delegation readiness.
