@@ -9,9 +9,32 @@ Review the current project against autonomous delegation principles and produce 
 
 For source background and attribution, read [overnight-delegation.md](references/overnight-delegation.md) when the user asks about the origin of the principles or wants to adapt the source prompt.
 
+## Positioning
+
+Use this skill as a pre-flight review for agent handoffs. It reviews the task packet before work starts: whether the issue, PR brief, module plan, or project handoff gives an autonomous agent enough definition, context, fallback paths, decision boundaries, and evidence requirements to work without silently drifting or stalling.
+
+The core framing: review the handoff contract, not the code implementation.
+
 ## Scope
 
 If the user names a module, issue range, PR, or focus area, limit the review to that scope. If no scope is given, review the whole project.
+
+## Best Use Cases
+
+Use this skill for:
+
+- GitHub or Linear issues marked ready for agent work.
+- PRDs, implementation plans, specs, or task packets before delegating them.
+- Agent handoff documents for overnight or unsupervised execution.
+- In-progress work where an agent is blocked, drifting, or producing unverifiable completion claims.
+- Recently completed work where the user wants to know whether evidence and workarounds were recorded well enough for review.
+
+Do not use this skill as a replacement for:
+
+- Code review focused on implementation correctness.
+- Product strategy decisions.
+- Security, legal, or compliance review.
+- A request to directly implement fixes.
 
 ## The Six Principles
 
@@ -46,12 +69,25 @@ Scan likely evidence sources:
 - `docs/` for contracts, decisions, known issues, or planning docs
 - Source files for `TODO`, `FIXME`, `stub`, `mock`, `hack`, and `workaround` markers
 - CI, test, or release notes when completion evidence is relevant
+- PR descriptions, commit messages, and review comments when the work has already started
+- Agent transcripts or handoff notes when the task was previously delegated
 
 Useful local search:
 
 ```bash
 rg -n "TODO|FIXME|stub|STUB|mock|MOCK|hack|HACK|workaround|WORKAROUND|ready-to-work|ready-to-ship|evidence|Done means|Definition of Done" .
 ```
+
+### Evidence To Look For
+
+Prefer concrete evidence over general claims:
+
+- Done definition: explicit acceptance criteria, user-visible behavior, passing commands, expected screenshots, or observable state changes.
+- Packaged context: named files, API docs, schemas, env vars, credentials assumptions, service dependencies, and constraints.
+- Blocker policy: allowed mocks, stubs, assumptions, degraded paths, and replacement conditions.
+- Workaround log: a durable issue comment, changelog entry, notes file, ADR, or task section that records deviations.
+- Decision boundary: clear list of what the agent may decide and what requires human confirmation.
+- Completion evidence: test output, command logs, screenshots, curl responses, deployed URLs, smoke-test steps, CI links, or reproduction notes.
 
 ### 2. Score Each Principle
 
