@@ -17,6 +17,15 @@
       "skills": [
         "./skills/delegation-review"
       ]
+    },
+    {
+      "name": "content-skills",
+      "description": "Skills for turning rough ideas into multi-platform social content workflows",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/content-pipeline"
+      ]
     }
   ]
 }

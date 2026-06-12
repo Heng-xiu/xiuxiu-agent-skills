@@ -1,0 +1,3 @@
+display_name: Content Pipeline
+short_description: Turn rough ideas into publish-ready multi-platform social posts.
+default_prompt: Use content-pipeline to take this idea from market review through platform-specific draft and posting recommendations.
