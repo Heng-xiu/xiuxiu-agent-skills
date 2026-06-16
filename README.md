@@ -21,6 +21,7 @@ This repository currently includes:
 
 - `delegation-review`: Review whether a project or issue set is ready for unsupervised agent delegation.
 - `content-pipeline`: Turn a rough content idea into platform-specific social drafts and posting recommendations.
+- `verify-ai-server-with-device-env`: Verify that a Dockerized AI inference server can run on a target GPU device. Covers host CUDA/driver compatibility, Docker NVIDIA runtime, compose GPU config, model loading, and API health.
 
 ## Disclaimer
 
@@ -59,7 +60,7 @@ Alternatively, directly install the plugin via:
 /plugin install content-skills@xiuxiu-agent-skills
 ```
 
-After installing the plugin, you can use the skill by mentioning it. For instance: "Use the delegation-review skill to review all open issues for autonomous handoff readiness." Or: "Use content-pipeline to turn this rough idea into FB, Threads, IG, X, and Xiaohongshu drafts."
+After installing the plugin, you can use the skill by mentioning it. For instance: "Use the delegation-review skill to review all open issues for autonomous handoff readiness." Or: "Use content-pipeline to turn this rough idea into FB, Threads, IG, X, and Xiaohongshu drafts." Or: "Use verify-ai-server-with-device-env to check if my Docker inference server will run on this GPU machine."
 
 ## Codex and other agents
 
@@ -79,6 +80,10 @@ npx skills add https://github.com/Heng-xiu/xiuxiu-agent-skills/tree/main/skills/
 npx skills add https://github.com/Heng-xiu/xiuxiu-agent-skills/tree/main/skills/content-pipeline
 ```
 
+```bash
+npx skills add https://github.com/Heng-xiu/xiuxiu-agent-skills/tree/main/skills/verify-ai-server-with-device-env
+```
+
 Install globally for Codex:
 
 ```bash
@@ -87,6 +92,10 @@ npx skills add Heng-xiu/xiuxiu-agent-skills --skill delegation-review --global -
 
 ```bash
 npx skills add Heng-xiu/xiuxiu-agent-skills --skill content-pipeline --global --agent codex
+```
+
+```bash
+npx skills add Heng-xiu/xiuxiu-agent-skills --skill verify-ai-server-with-device-env --global --agent codex
 ```
 
 # Creating a Basic Skill
