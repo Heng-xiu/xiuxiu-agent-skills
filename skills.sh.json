@@ -6,7 +6,8 @@
       "title": "Engineering",
       "description": "Skills for delegation, review, and engineering workflow quality.",
       "skills": [
-        "delegation-review"
+        "delegation-review",
+        "verify-ai-server-with-device-env"
       ]
     },
     {
