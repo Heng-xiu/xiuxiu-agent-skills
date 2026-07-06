@@ -1,0 +1,236 @@
+<!doctype html>
+<!--
+  buy-in-doc.html — C1 說服文件（The Buy-In Doc）工件模板
+  對付象限：已知未知（審核者心裡的疑問）（見 references/quadrants.md）
+
+  結構：頂部演示區（純 CSS/SVG，尊重 prefers-reduced-motion）→ 異議/回應對照表 → 簽核人清單。
+  本檔已填入示意假資料（情境同前：clip 匯出改伺服器端渲染）。
+-->
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>說服文件 — clip 匯出伺服器端渲染改動</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fafafa; --surface: #ffffff; --surface-2: #f2f2f5; --border: #e2e2e6;
+    --text: #1a1a1a; --text-muted: #5c5c66; --accent: #0d9488; --accent-contrast: #ffffff;
+    --q-known-known: #375074; --q-known-unknown: #8a5a00; --q-unknown-known: #7c3aed; --q-unknown-unknown: #c62828;
+    --p-pre: #137333; --p-during: #1656c9; --p-post: #5b21b6;
+    --radius: 12px; --space-1: 8px; --space-2: 16px; --space-3: 24px; --space-4: 32px; --space-6: 48px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --transition-fast: 160ms ease-out;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1117; --surface: #161b22; --surface-2: #1c2129; --border: #30363d;
+      --text: #e6edf3; --text-muted: #8b949e; --accent: #2dd4bf; --accent-contrast: #062723;
+      --q-known-known: #93a8c7; --q-known-unknown: #f2c14e; --q-unknown-known: #cf9dfa; --q-unknown-unknown: #ff8a80;
+      --p-pre: #5ee69c; --p-during: #79b8ff; --p-post: #b79cf7;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1117; --surface: #161b22; --surface-2: #1c2129; --border: #30363d;
+    --text: #e6edf3; --text-muted: #8b949e; --accent: #2dd4bf; --accent-contrast: #062723;
+    --q-known-known: #93a8c7; --q-known-unknown: #f2c14e; --q-unknown-known: #cf9dfa; --q-unknown-unknown: #ff8a80;
+    --p-pre: #5ee69c; --p-during: #79b8ff; --p-post: #b79cf7;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  img, svg { max-width: 100%; }
+  .skip-link { position: absolute; left: -999px; top: auto; background: var(--accent); color: var(--accent-contrast); padding: 8px 16px; border-radius: 8px; z-index: 100; }
+  .skip-link:focus { left: 16px; top: 16px; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 var(--space-3); }
+
+  .topbar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .topbar-inner { max-width: 980px; margin: 0 auto; padding: var(--space-2) var(--space-3); display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+  .brand { font-weight: 700; font-size: 0.95rem; }
+  .brand small { display: block; font-weight: 400; color: var(--text-muted); font-size: 0.75rem; }
+  .theme-toggle { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 999px; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color var(--transition-fast), transform var(--transition-fast); flex-shrink: 0; }
+  .theme-toggle:hover { border-color: var(--accent); }
+  .theme-toggle:active { transform: scale(0.94); }
+  .theme-toggle .icon-sun { display: none; }
+  .theme-toggle .icon-moon { display: inline-flex; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline-flex; }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline-flex; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+  }
+
+  .meta-bar { max-width: 980px; margin: 0 auto; padding: var(--space-2) var(--space-3) 0; display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
+  .badge { display: inline-flex; align-items: center; gap: 0.4em; padding: 0.28em 0.75em; border-radius: 999px; font-size: 0.78rem; font-weight: 600; border: 1px solid var(--border); white-space: nowrap; background: var(--surface); }
+  .badge .dot { width: 0.55em; height: 0.55em; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .badge-phase-post { border-color: var(--p-post); color: var(--p-post); }
+  .badge-phase-post .dot { background: var(--p-post); }
+  .badge-q-known-unknown { border-color: var(--q-known-unknown); color: var(--q-known-unknown); }
+  .badge-q-known-unknown .dot { background: var(--q-known-unknown); }
+  .meta-text { font-size: 0.78rem; color: var(--text-muted); }
+
+  main { padding: var(--space-4) 0 var(--space-6); }
+  h1 { font-size: 1.6rem; margin: 0 0 var(--space-1); }
+  h2 { font-size: 1.2rem; margin: var(--space-4) 0 var(--space-2); }
+  h3 { font-size: 1rem; margin: 0 0 4px; }
+  p { margin: 0 0 var(--space-2); }
+  .subtitle { color: var(--text-muted); margin-bottom: var(--space-3); }
+
+  /* 演示區：流程動畫 */
+  .demo-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-4) var(--space-3); }
+  .flow { position: relative; display: flex; align-items: stretch; justify-content: space-between; gap: var(--space-1); }
+  .flow-node {
+    position: relative; z-index: 1; flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: var(--space-2); text-align: center; font-size: 0.82rem;
+  }
+  .flow-node .n { display:block; font-size: 0.68rem; color: var(--text-muted); margin-bottom: 2px; font-weight:700; }
+  .flow-line {
+    position: absolute; top: 50%; left: 4%; right: 4%; height: 2px; background: var(--border); z-index: 0;
+  }
+  .flow-pulse {
+    position: absolute; top: 50%; width: 12px; height: 12px; margin-top: -6px; left: 2%;
+    border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent);
+    animation: flow-move 3.6s ease-in-out infinite;
+  }
+  @keyframes flow-move { 0%, 100% { left: 2%; } 50% { left: 92%; } }
+  @media (prefers-reduced-motion: reduce) {
+    .flow-pulse { animation: none; left: 92%; }
+  }
+  .demo-caption { text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-top: var(--space-2); }
+
+  table.objection-table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table.objection-table th, table.objection-table td { padding: var(--space-2); border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; font-size: 0.9rem; }
+  table.objection-table th { background: var(--surface-2); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted); }
+  table.objection-table tr:last-child td { border-bottom: none; }
+  .table-scroll { overflow-x: auto; }
+
+  .signoff-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+  .signoff-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: var(--space-2); display: flex; align-items: center; gap: var(--space-2); }
+  .signoff-role { font-weight: 700; min-width: 140px; color: var(--p-post); }
+  .signoff-scope { color: var(--text-muted); font-size: 0.88rem; }
+
+  footer { border-top: 1px solid var(--border); padding: var(--space-3); text-align: center; color: var(--text-muted); font-size: 0.8rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+    html { scroll-behavior: auto; }
+  }
+  @media (max-width: 640px) {
+    .topbar-inner, .meta-bar, .wrap { padding-left: var(--space-2); padding-right: var(--space-2); }
+    .flow { flex-direction: column; }
+    .flow-line, .flow-pulse { display: none; }
+    .signoff-item { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到主要內容</a>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">Know Your Unknowns <small>C1 · 說服文件 The Buy-In Doc</small></div>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切換深色／淺色主題">
+      <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="meta-bar" role="group" aria-label="工件中繼資訊">
+  <span class="badge badge-phase-post"><span class="dot" aria-hidden="true"></span>階段：實施後 Post</span>
+  <span class="badge badge-q-known-unknown"><span class="dot" aria-hidden="true"></span>對付：審核者的已知未知</span>
+  <!-- INSERT: 產生時間（agent 動態填入） -->
+  <span class="meta-text">產生時間：2026-07-06 10:05</span>
+  <!-- INSERT: 來源任務（agent 動態填入） -->
+  <span class="meta-text">來源任務：clip 匯出改伺服器端渲染 — 送審前的說服文件</span>
+</div>
+
+<main id="main-content">
+  <div class="wrap">
+    <h1>說服文件：clip 匯出改後端渲染，可以出貨了</h1>
+    <p class="subtitle">先看懂它做了什麼，再讀細節。以下先用一段流程演示開場，接著逐條預先回應審核者可能提出的異議。</p>
+
+    <section class="demo-card" aria-label="匯出流程演示">
+      <!-- INSERT: 視覺化演示（agent 可替換為更貼合實際改動的流程節點/動畫）。純 CSS 動畫，尊重 prefers-reduced-motion。 -->
+      <div class="flow">
+        <div class="flow-line" aria-hidden="true"></div>
+        <div class="flow-pulse" aria-hidden="true"></div>
+        <div class="flow-node"><span class="n">1</span>使用者按下匯出</div>
+        <div class="flow-node"><span class="n">2</span>背景 Job Queue</div>
+        <div class="flow-node"><span class="n">3</span>FFmpeg Render Worker</div>
+        <div class="flow-node"><span class="n">4</span>Signed URL 產生</div>
+        <div class="flow-node"><span class="n">5</span>使用者下載</div>
+      </div>
+      <p class="demo-caption">整條流程從瀏覽器端 <code>MediaRecorder</code> 改成伺服器端背景渲染；使用者體感差異是「匯出中」提示變長，但不再受限於瀏覽器相容性。</p>
+    </section>
+
+    <h2>審核者可能的異議與預先回應</h2>
+    <div class="table-scroll">
+      <table class="objection-table">
+        <thead><tr><th>反對意見</th><th>證據 / 預先回應</th></tr></thead>
+        <tbody>
+          <!-- INSERT: 異議/回應對照表，agent 動態填入。以下為示意假資料。 -->
+          <tr>
+            <td>「舊的瀏覽器端路徑會不會有相容性風險？」</td>
+            <td>保留兩週 fallback（feature flag 控制），且 <code>tests/export/legacy_recorder.spec.ts</code> 仍綠燈；兩週後才評估移除。</td>
+          </tr>
+          <tr>
+            <td>「背景渲染的機器成本會不會暴增？」</td>
+            <td>worker 資源上限設為 512MB／併發 2（見決策日誌），staging 壓測顯示尖峰時段佇列延遲 &lt; 8 秒，成本增幅在預算內（附 benchmark 連結）。</td>
+          </tr>
+          <tr>
+            <td>「TTL 改了，會不會有安全性疑慮（連結外流）？」</td>
+            <td>TTL 起算點改為「渲染完成時」，時長維持 30 分鐘，未超出原本安全假設；過期後端點回傳 410，不洩漏檔案是否存在。</td>
+          </tr>
+          <tr>
+            <td>「渲染 worker 掛掉的話，使用者會卡住嗎？」</td>
+            <td>沿用既有 <code>jobs/queue.ts</code> 重試慣例（指數退避、最多 3 次），失敗後狀態端點回傳分類錯誤碼，前端顯示「重試」或「聯絡客服」。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>誰需要簽核哪一部分</h2>
+    <ul class="signoff-list">
+      <!-- INSERT: 簽核人清單，agent 動態填入 -->
+      <li class="signoff-item"><span class="signoff-role">後端 Reviewer</span><span class="signoff-scope">worker 資源設定、queue 重試邏輯、錯誤碼分類</span></li>
+      <li class="signoff-item"><span class="signoff-role">前端 Reviewer</span><span class="signoff-scope">輪詢邏輯、匯出中/失敗的 UI 呈現</span></li>
+      <li class="signoff-item"><span class="signoff-role">安全 / 平台團隊</span><span class="signoff-scope">signed URL TTL 與過期行為</span></li>
+      <li class="signoff-item"><span class="signoff-role">產品負責人</span><span class="signoff-scope">舊路徑下線時程、使用者體感差異的溝通</span></li>
+    </ul>
+  </div>
+</main>
+
+<footer>由 <strong>know-your-unknowns</strong> skill 產生 · 此工件為自包含 HTML，可離線開啟、可直接分享</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var STORAGE_KEY = 'kyu-theme';
+  var stored = null;
+  try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+  if (stored === 'dark' || stored === 'light') { root.setAttribute('data-theme', stored); }
+  function currentTheme() {
+    var attr = root.getAttribute('data-theme');
+    if (attr) return attr;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  function init() {
+    var btn = document.getElementById('theme-toggle');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        var next = currentTheme() === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
+      });
+    }
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!doctype html>
+<!--
+  merge-quiz.html — C2 合併前測驗（Quiz Me Before I Merge）工件模板
+  對付象限：未知已知（審核者以為自己懂了）（見 references/quadrants.md）
+
+  結構：心智模型圖 → 2–3 個「不明顯但重要」的行為 → 5–6 題決策題（即時計分，
+  答錯展開並連回對應段落，全對才解鎖通過訊息）。
+  本檔已填入示意假資料（情境同前：clip 匯出改伺服器端渲染的 14 檔案 diff）。
+-->
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>合併前測驗 — clip 匯出伺服器端渲染改動</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fafafa; --surface: #ffffff; --surface-2: #f2f2f5; --border: #e2e2e6;
+    --text: #1a1a1a; --text-muted: #5c5c66; --accent: #0d9488; --accent-contrast: #ffffff;
+    --q-known-known: #375074; --q-known-unknown: #8a5a00; --q-unknown-known: #7c3aed; --q-unknown-unknown: #c62828;
+    --p-pre: #137333; --p-during: #1656c9; --p-post: #5b21b6;
+    --radius: 12px; --space-1: 8px; --space-2: 16px; --space-3: 24px; --space-4: 32px; --space-6: 48px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --transition-fast: 160ms ease-out;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1117; --surface: #161b22; --surface-2: #1c2129; --border: #30363d;
+      --text: #e6edf3; --text-muted: #8b949e; --accent: #2dd4bf; --accent-contrast: #062723;
+      --q-known-known: #93a8c7; --q-known-unknown: #f2c14e; --q-unknown-known: #cf9dfa; --q-unknown-unknown: #ff8a80;
+      --p-pre: #5ee69c; --p-during: #79b8ff; --p-post: #b79cf7;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1117; --surface: #161b22; --surface-2: #1c2129; --border: #30363d;
+    --text: #e6edf3; --text-muted: #8b949e; --accent: #2dd4bf; --accent-contrast: #062723;
+    --q-known-known: #93a8c7; --q-known-unknown: #f2c14e; --q-unknown-known: #cf9dfa; --q-unknown-unknown: #ff8a80;
+    --p-pre: #5ee69c; --p-during: #79b8ff; --p-post: #b79cf7;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  img, svg { max-width: 100%; }
+  .skip-link { position: absolute; left: -999px; top: auto; background: var(--accent); color: var(--accent-contrast); padding: 8px 16px; border-radius: 8px; z-index: 100; }
+  .skip-link:focus { left: 16px; top: 16px; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 var(--space-3); }
+
+  .topbar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .topbar-inner { max-width: 900px; margin: 0 auto; padding: var(--space-2) var(--space-3); display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+  .brand { font-weight: 700; font-size: 0.95rem; }
+  .brand small { display: block; font-weight: 400; color: var(--text-muted); font-size: 0.75rem; }
+  .theme-toggle { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 999px; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color var(--transition-fast), transform var(--transition-fast); flex-shrink: 0; }
+  .theme-toggle:hover { border-color: var(--accent); }
+  .theme-toggle:active { transform: scale(0.94); }
+  .theme-toggle .icon-sun { display: none; }
+  .theme-toggle .icon-moon { display: inline-flex; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline-flex; }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline-flex; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+  }
+
+  .meta-bar { max-width: 900px; margin: 0 auto; padding: var(--space-2) var(--space-3) 0; display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
+  .badge { display: inline-flex; align-items: center; gap: 0.4em; padding: 0.28em 0.75em; border-radius: 999px; font-size: 0.78rem; font-weight: 600; border: 1px solid var(--border); white-space: nowrap; background: var(--surface); }
+  .badge .dot { width: 0.55em; height: 0.55em; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .badge-phase-post { border-color: var(--p-post); color: var(--p-post); }
+  .badge-phase-post .dot { background: var(--p-post); }
+  .badge-q-unknown-known { border-color: var(--q-unknown-known); color: var(--q-unknown-known); }
+  .badge-q-unknown-known .dot { background: var(--q-unknown-known); }
+  .meta-text { font-size: 0.78rem; color: var(--text-muted); }
+
+  main { padding: var(--space-4) 0 var(--space-6); }
+  h1 { font-size: 1.6rem; margin: 0 0 var(--space-1); }
+  h2 { font-size: 1.2rem; margin: var(--space-4) 0 var(--space-2); }
+  h3 { font-size: 1rem; margin: 0 0 4px; }
+  p { margin: 0 0 var(--space-2); }
+  .subtitle { color: var(--text-muted); margin-bottom: var(--space-3); }
+
+  .model-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-3); }
+  .model-diagram { display: flex; align-items: center; justify-content: center; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-2); }
+  .model-box { border: 1px solid var(--border); border-radius: 10px; padding: var(--space-2); text-align: center; font-size: 0.82rem; min-width: 130px; background: var(--surface-2); }
+  .model-box .label { display: block; font-size: 0.68rem; color: var(--text-muted); font-weight: 700; margin-bottom: 2px; }
+  .model-arrow { color: var(--text-muted); font-size: 1.1rem; }
+
+  .behavior-list { display: flex; flex-direction: column; gap: var(--space-1); }
+  .behavior-item { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--q-unknown-known); border-radius: 10px; padding: var(--space-2); scroll-margin-top: 90px; }
+
+  .quiz-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-3); margin-bottom: var(--space-2); }
+  .quiz-item legend { font-weight: 600; padding: 0 0 var(--space-1); }
+  .quiz-options { display: flex; flex-direction: column; gap: 6px; }
+  .quiz-option { display: flex; align-items: flex-start; gap: 8px; padding: 8px; border-radius: 8px; border: 1px solid transparent; }
+  .quiz-option:hover { border-color: var(--border); }
+  .quiz-option input { margin-top: 3px; }
+  .quiz-feedback { margin-top: var(--space-2); padding: var(--space-2); border-radius: 8px; font-size: 0.88rem; border: 1px solid var(--border); }
+  .quiz-feedback[hidden] { display: none; }
+  .quiz-feedback.is-correct { border-color: var(--accent); }
+  .quiz-feedback.is-incorrect { border-color: var(--q-unknown-unknown); }
+  .quiz-feedback a { font-weight: 600; }
+
+  .quiz-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+  .quiz-submit {
+    border: 1px solid var(--accent); background: var(--accent); color: var(--accent-contrast);
+    border-radius: 8px; padding: 10px 18px; font-size: 0.92rem; font-weight: 700; cursor: pointer;
+  }
+  .quiz-submit:hover { opacity: 0.92; }
+  .quiz-score { font-size: 0.9rem; color: var(--text-muted); }
+
+  .pass-banner {
+    margin-top: var(--space-3); padding: var(--space-3); border-radius: var(--radius);
+    border: 1px solid var(--accent); background: var(--surface); text-align: center; font-weight: 600;
+  }
+  .pass-banner[hidden] { display: none; }
+
+  footer { border-top: 1px solid var(--border); padding: var(--space-3); text-align: center; color: var(--text-muted); font-size: 0.8rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+    html { scroll-behavior: auto; }
+  }
+  @media (max-width: 640px) { .topbar-inner, .meta-bar, .wrap { padding-left: var(--space-2); padding-right: var(--space-2); } }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到主要內容</a>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">Know Your Unknowns <small>C2 · 合併前測驗 Quiz Me Before I Merge</small></div>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切換深色／淺色主題">
+      <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="meta-bar" role="group" aria-label="工件中繼資訊">
+  <span class="badge badge-phase-post"><span class="dot" aria-hidden="true"></span>階段：實施後 Post</span>
+  <span class="badge badge-q-unknown-known"><span class="dot" aria-hidden="true"></span>對付：以為自己懂了的未知已知</span>
+  <!-- INSERT: 產生時間（agent 動態填入） -->
+  <span class="meta-text">產生時間：2026-07-06 11:20</span>
+  <!-- INSERT: 來源任務（agent 動態填入，例如指向 PR 編號） -->
+  <span class="meta-text">來源任務：clip 匯出改伺服器端渲染 — 14 個檔案的 diff，合併前測驗</span>
+</div>
+
+<main id="main-content">
+  <div class="wrap">
+    <h1>合併前先考自己：這個改動你真的看懂了嗎？</h1>
+    <p class="subtitle">全對（6/6）才算通過。答錯的題目會展開說明並連回對應段落。</p>
+
+    <h2>心智模型</h2>
+    <section class="model-card">
+      <!-- INSERT: 心智模型圖，agent 依實際 diff 置換節點內容 -->
+      <div class="model-diagram">
+        <div class="model-box"><span class="label">改動前</span>瀏覽器端 MediaRecorder 即時渲染</div>
+        <span class="model-arrow" aria-hidden="true">→</span>
+        <div class="model-box"><span class="label">改動後</span>背景 Job ＋ FFmpeg Worker 非同步渲染</div>
+        <span class="model-arrow" aria-hidden="true">→</span>
+        <div class="model-box"><span class="label">交付方式</span>Signed URL（30 分鐘 TTL）</div>
+      </div>
+      <p>核心變化：渲染從「使用者裝置上、同步、即時」變成「伺服器上、非同步、輪詢查詢結果」。這改變了失敗模式、時間感、與安全邊界。</p>
+    </section>
+
+    <h2>不明顯但重要的行為</h2>
+    <div class="behavior-list">
+      <!-- INSERT: 2–3 個不明顯但重要的行為，agent 依實際 diff 填入，並給予 id 供測驗連回 -->
+      <div class="behavior-item" id="behavior-ttl">
+        <h3>Signed URL 的 TTL 起算點改成「渲染完成時」，不是「請求發起時」</h3>
+        <p>這代表使用者從按下匯出到連結真正過期，實際可用時間可能遠超過 30 分鐘（等 worker 排隊 + 渲染的時間都不算在內）。</p>
+      </div>
+      <div class="behavior-item" id="behavior-fallback">
+        <h3>舊的瀏覽器端路徑用 feature flag 保留兩週，不是立刻刪除</h3>
+        <p>這兩週內，同一個匯出按鈕在 flag 開/關時走的是完全不同的程式碼路徑，debug 時要先確認使用者當下走的是哪一條。</p>
+      </div>
+      <div class="behavior-item" id="behavior-worker">
+        <h3>渲染 worker 是獨立資源池，併發數上限只有 2</h3>
+        <p>尖峰時段第 3 個以後的匯出請求會排隊等待，不是立刻並行處理——這不是 bug，是刻意的資源隔離設計（見決策日誌）。</p>
+      </div>
+    </div>
+
+    <h2>測驗（6 題，需全對才算通過）</h2>
+    <form id="quiz-form">
+      <!-- INSERT: 5–6 題決策題，agent 依實際 diff 出題。data-correct 為正確選項的 index（從 0 開始）。 -->
+      <fieldset class="quiz-item" data-correct="1">
+        <legend>Q1. 使用者按下匯出後，若此時後端 worker 佇列已滿，使用者體感上會發生什麼？</legend>
+        <div class="quiz-options">
+          <label class="quiz-option"><input type="radio" name="q1" value="0">畫面卡住直到有 worker 空出來才回應</label>
+          <label class="quiz-option"><input type="radio" name="q1" value="1">立刻收到「已排入佇列」的回應，之後靠輪詢查看進度</label>
+          <label class="quiz-option"><input type="radio" name="q1" value="2">請求會被拒絕，要求使用者稍後重試</label>
+          <label class="quiz-option"><input type="radio" name="q1" value="3">自動切回舊的瀏覽器端渲染</label>
+        </div>
+        <div class="quiz-feedback" hidden>
+          <!-- INSERT: 這題的說明與連回段落連結 -->
+          正確答案是「立刻收到已排入佇列的回應」——渲染是背景 job，前端靠輪詢查詢狀態。詳見 <a href="#behavior-worker">「渲染 worker 是獨立資源池」</a>。
+        </div>
+      </fieldset>
+
+      <fieldset class="quiz-item" data-correct="2">
+        <legend>Q2. 使用者按下匯出 5 分鐘後，worker 才排到並完成渲染。此時 signed URL 還剩多少可用時間？</legend>
+        <div class="quiz-options">
+          <label class="quiz-option"><input type="radio" name="q2" value="0">25 分鐘（30 分鐘扣掉排隊的 5 分鐘）</label>
+          <label class="quiz-option"><input type="radio" name="q2" value="1">已經過期，因為 TTL 從請求發起時就開始算</label>
+          <label class="quiz-option"><input type="radio" name="q2" value="2">完整 30 分鐘，因為 TTL 起算點是渲染完成時</label>
+          <label class="quiz-option"><input type="radio" name="q2" value="3">無法確定，要看伺服器當下負載</label>
+        </div>
+        <div class="quiz-feedback" hidden>
+          正確答案是「完整 30 分鐘」——TTL 起算點是渲染完成時，不是請求發起時。詳見 <a href="#behavior-ttl">「Signed URL 的 TTL 起算點」</a>。
+        </div>
+      </fieldset>
+
+      <fieldset class="quiz-item" data-correct="0">
+        <legend>Q3. Feature flag 關閉（走舊路徑）時，這次改動新增的後端 worker 程式碼會被執行嗎？</legend>
+        <div class="quiz-options">
+          <label class="quiz-option"><input type="radio" name="q3" value="0">不會，走舊路徑時完全不會碰到新程式碼</label>
+          <label class="quiz-option"><input type="radio" name="q3" value="1">會，但新程式碼會被跳過渲染步驟</label>
+          <label class="quiz-option"><input type="radio" name="q3" value="2">會，兩條路徑其實共用同一個 worker</label>
+          <label class="quiz-option"><input type="radio" name="q3" value="3">不確定，要看 flag 的實作方式</label>
+        </div>
+        <div class="quiz-feedback" hidden>
+          正確答案是「不會」——兩條路徑是完全獨立的程式碼路徑。詳見 <a href="#behavior-fallback">「舊的瀏覽器端路徑用 feature flag 保留」</a>。
+        </div>
+      </fieldset>
+
+      <fieldset class="quiz-item" data-correct="1">
+        <legend>Q4. 渲染 worker 因記憶體不足而 crash，使用者會看到什麼？</legend>
+        <div class="quiz-options">
+          <label class="quiz-option"><input type="radio" name="q4" value="0">瀏覽器端會自動 fallback 回 MediaRecorder</label>
+          <label class="quiz-option"><input type="radio" name="q4" value="1">依既有 queue 重試慣例自動重試最多 3 次，仍失敗則顯示分類後的錯誤訊息</label>
+          <label class="quiz-option"><input type="radio" name="q4" value="2">系統會無限重試直到成功</label>
+          <label class="quiz-option"><input type="radio" name="q4" value="3">使用者會看到原始的 FFmpeg 錯誤訊息</label>
+        </div>
+        <div class="quiz-feedback" hidden>
+          正確答案是「依既有 queue 重試慣例」——這是團隊既有慣例（見 A1 盲點卡 03），不是重新發明一套錯誤處理。詳見 <a href="#behavior-worker">「渲染 worker 是獨立資源池」</a>。
+        </div>
+      </fieldset>
+
+      <fieldset class="quiz-item" data-correct="3">
+        <legend>Q5. 標註（annotation）在伺服器端渲染時，座標是怎麼對齊到影格上的？</legend>
+        <div class="quiz-options">
+          <label class="quiz-option"><input type="radio" name="q5" value="0">直接沿用瀏覽器端記錄的螢幕座標</label>
+          <label class="quiz-option"><input type="radio" name="q5" value="1">由 FFmpeg 自動偵測畫面內容對齊</label>
+          <label class="quiz-option"><input type="radio" name="q5" value="2">使用者需要在伺服器端重新標註一次</label>
+          <label class="quiz-option"><input type="radio" name="q5" value="3">透過新增的「螢幕座標→影格座標」轉換函式，並記錄匯出時的影片解析度</label>
+        </div>
+        <div class="quiz-feedback" hidden>
+          正確答案是「透過新增的轉換函式」——這是這次改動裡最容易被忽略的隱藏概念（見盲點掃描與決策日誌）。
+        </div>
+      </fieldset>
+
+      <fieldset class="quiz-item" data-correct="0">
+        <legend>Q6. 兩週後移除 feature flag 與舊路徑時，最應該先確認什麼？</legend>
+        <div class="quiz-options">
+          <label class="quiz-option"><input type="radio" name="q6" value="0">舊路徑的呼叫量是否已降到接近零、且新路徑錯誤率穩定</label>
+          <label class="quiz-option"><input type="radio" name="q6" value="1">程式碼是否還能編譯</label>
+          <label class="quiz-option"><input type="radio" name="q6" value="2">是否有人反對移除</label>
+          <label class="quiz-option"><input type="radio" name="q6" value="3">不需要額外確認，兩週到就可以直接刪</label>
+        </div>
+        <div class="quiz-feedback" hidden>
+          正確答案是「確認呼叫量與錯誤率」——這是說服文件與決策表裡明訂的下線前提條件，不是單純的時間到期。
+        </div>
+      </fieldset>
+
+      <div class="quiz-actions">
+        <button type="submit" class="quiz-submit">送出，計分</button>
+        <span class="quiz-score" id="quiz-score" role="status" aria-live="polite"></span>
+      </div>
+    </form>
+
+    <div class="pass-banner" id="pass-banner" hidden role="status" aria-live="polite">
+      <!-- INSERT: 全對後的通過訊息，agent 可依情境調整用語 -->
+      全對！你可以把這個改動解釋給那個半夜被 call 起來的人聽了。建議現在送出 merge。
+    </div>
+  </div>
+</main>
+
+<footer>由 <strong>know-your-unknowns</strong> skill 產生 · 此工件為自包含 HTML，可離線開啟、可直接分享</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var STORAGE_KEY = 'kyu-theme';
+  var stored = null;
+  try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+  if (stored === 'dark' || stored === 'light') { root.setAttribute('data-theme', stored); }
+  function currentTheme() {
+    var attr = root.getAttribute('data-theme');
+    if (attr) return attr;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+
+  function initTheme() {
+    var btn = document.getElementById('theme-toggle');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        var next = currentTheme() === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
+      });
+    }
+  }
+
+  function initQuiz() {
+    var form = document.getElementById('quiz-form');
+    if (!form) return;
+    var scoreEl = document.getElementById('quiz-score');
+    var passBanner = document.getElementById('pass-banner');
+    var fieldsets = Array.prototype.slice.call(form.querySelectorAll('.quiz-item'));
+
+    form.addEventListener('submit', function (evt) {
+      evt.preventDefault();
+      var correctCount = 0;
+
+      fieldsets.forEach(function (fs) {
+        var correctIndex = fs.getAttribute('data-correct');
+        var name = fs.querySelector('input[type="radio"]').name;
+        var selected = form.querySelector('input[name="' + name + '"]:checked');
+        var feedback = fs.querySelector('.quiz-feedback');
+        var isCorrect = !!selected && selected.value === correctIndex;
+
+        if (isCorrect) correctCount++;
+
+        if (feedback) {
+          if (!selected) {
+            feedback.hidden = false;
+            feedback.classList.remove('is-correct');
+            feedback.classList.add('is-incorrect');
+          } else if (isCorrect) {
+            feedback.hidden = true;
+            feedback.classList.remove('is-incorrect');
+          } else {
+            feedback.hidden = false;
+            feedback.classList.remove('is-correct');
+            feedback.classList.add('is-incorrect');
+          }
+        }
+      });
+
+      var total = fieldsets.length;
+      scoreEl.textContent = '得分：' + correctCount + ' / ' + total;
+
+      if (correctCount === total) {
+        passBanner.hidden = false;
+      } else {
+        passBanner.hidden = true;
+      }
+    });
+  }
+
+  function init() { initTheme(); initQuiz(); }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
+})();
+</script>
+</body>
+</html>

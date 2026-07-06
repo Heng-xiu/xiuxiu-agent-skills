@@ -1,0 +1,215 @@
+<!doctype html>
+<!--
+  decision-log.html — B1 決策日誌（Implementation Notes）工件模板
+  對付象限：未知未知（做的當下才冒出來，記錄後降級為已知）（見 references/quadrants.md）
+
+  這份工件在實作過程中會被「持續更新」（同一份檔案），不要每偏離一次就開新檔。
+  本檔已填入示意假資料（情境同前：clip 匯出改伺服器端渲染的實作過程）。
+-->
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>決策日誌 — clip 匯出伺服器端渲染改動</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fafafa; --surface: #ffffff; --surface-2: #f2f2f5; --border: #e2e2e6;
+    --text: #1a1a1a; --text-muted: #5c5c66; --accent: #0d9488; --accent-contrast: #ffffff;
+    --q-known-known: #375074; --q-known-unknown: #8a5a00; --q-unknown-known: #7c3aed; --q-unknown-unknown: #c62828;
+    --p-pre: #137333; --p-during: #1656c9; --p-post: #5b21b6;
+    --radius: 12px; --space-1: 8px; --space-2: 16px; --space-3: 24px; --space-4: 32px; --space-6: 48px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --transition-fast: 160ms ease-out;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1117; --surface: #161b22; --surface-2: #1c2129; --border: #30363d;
+      --text: #e6edf3; --text-muted: #8b949e; --accent: #2dd4bf; --accent-contrast: #062723;
+      --q-known-known: #93a8c7; --q-known-unknown: #f2c14e; --q-unknown-known: #cf9dfa; --q-unknown-unknown: #ff8a80;
+      --p-pre: #5ee69c; --p-during: #79b8ff; --p-post: #b79cf7;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1117; --surface: #161b22; --surface-2: #1c2129; --border: #30363d;
+    --text: #e6edf3; --text-muted: #8b949e; --accent: #2dd4bf; --accent-contrast: #062723;
+    --q-known-known: #93a8c7; --q-known-unknown: #f2c14e; --q-unknown-known: #cf9dfa; --q-unknown-unknown: #ff8a80;
+    --p-pre: #5ee69c; --p-during: #79b8ff; --p-post: #b79cf7;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  img, svg { max-width: 100%; }
+  .skip-link { position: absolute; left: -999px; top: auto; background: var(--accent); color: var(--accent-contrast); padding: 8px 16px; border-radius: 8px; z-index: 100; }
+  .skip-link:focus { left: 16px; top: 16px; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 var(--space-3); }
+
+  .topbar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .topbar-inner { max-width: 860px; margin: 0 auto; padding: var(--space-2) var(--space-3); display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+  .brand { font-weight: 700; font-size: 0.95rem; }
+  .brand small { display: block; font-weight: 400; color: var(--text-muted); font-size: 0.75rem; }
+  .theme-toggle { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 999px; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color var(--transition-fast), transform var(--transition-fast); flex-shrink: 0; }
+  .theme-toggle:hover { border-color: var(--accent); }
+  .theme-toggle:active { transform: scale(0.94); }
+  .theme-toggle .icon-sun { display: none; }
+  .theme-toggle .icon-moon { display: inline-flex; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline-flex; }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline-flex; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+  }
+
+  .meta-bar { max-width: 860px; margin: 0 auto; padding: var(--space-2) var(--space-3) 0; display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
+  .badge { display: inline-flex; align-items: center; gap: 0.4em; padding: 0.28em 0.75em; border-radius: 999px; font-size: 0.78rem; font-weight: 600; border: 1px solid var(--border); white-space: nowrap; background: var(--surface); }
+  .badge .dot { width: 0.55em; height: 0.55em; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .badge-phase-during { border-color: var(--p-during); color: var(--p-during); }
+  .badge-phase-during .dot { background: var(--p-during); }
+  .badge-q-unknown-unknown { border-color: var(--q-unknown-unknown); color: var(--q-unknown-unknown); }
+  .badge-q-unknown-unknown .dot { background: var(--q-unknown-unknown); }
+  .meta-text { font-size: 0.78rem; color: var(--text-muted); }
+
+  main { padding: var(--space-4) 0 var(--space-6); }
+  h1 { font-size: 1.6rem; margin: 0 0 var(--space-1); }
+  h2 { font-size: 1.2rem; margin: var(--space-4) 0 var(--space-2); }
+  h3 { font-size: 1rem; margin: 0 0 4px; }
+  p { margin: 0 0 var(--space-2); }
+  .subtitle { color: var(--text-muted); margin-bottom: var(--space-3); }
+
+  .timeline { position: relative; margin-left: 10px; padding-left: var(--space-3); border-left: 2px solid var(--border); display: flex; flex-direction: column; gap: var(--space-3); }
+  .timeline-item { position: relative; }
+  .timeline-item::before {
+    content: ""; position: absolute; left: calc(-1 * var(--space-3) - 6px); top: 4px;
+    width: 12px; height: 12px; border-radius: 50%; background: var(--p-during); border: 2px solid var(--bg);
+  }
+  .timeline-time { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+  .timeline-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-3); }
+  .field-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); font-weight: 700; margin: var(--space-1) 0 2px; }
+  .field-label:first-of-type { margin-top: 0; }
+  .conservative-tag { display: inline-flex; align-items: center; gap: 0.35em; font-size: 0.72rem; font-weight: 700; padding: 0.2em 0.6em; border-radius: 6px; border: 1px solid var(--q-known-unknown); color: var(--q-known-unknown); margin-left: var(--space-1); }
+
+  .summary-card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--p-during); border-radius: var(--radius); padding: var(--space-3); }
+  .summary-card ol { margin: 0; padding-left: 1.2em; }
+  .summary-card li { margin-bottom: var(--space-1); }
+
+  footer { border-top: 1px solid var(--border); padding: var(--space-3); text-align: center; color: var(--text-muted); font-size: 0.8rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+    html { scroll-behavior: auto; }
+  }
+  @media (max-width: 640px) { .topbar-inner, .meta-bar, .wrap { padding-left: var(--space-2); padding-right: var(--space-2); } }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到主要內容</a>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">Know Your Unknowns <small>B1 · 決策日誌 Implementation Notes</small></div>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切換深色／淺色主題">
+      <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="meta-bar" role="group" aria-label="工件中繼資訊">
+  <span class="badge badge-phase-during"><span class="dot" aria-hidden="true"></span>階段：實施中 During</span>
+  <span class="badge badge-q-unknown-unknown"><span class="dot" aria-hidden="true"></span>對付：實作當下冒出的未知未知</span>
+  <!-- INSERT: 最後更新時間（agent 每次追加記錄時更新） -->
+  <span class="meta-text">最後更新：2026-07-05 18:47</span>
+  <!-- INSERT: 來源任務（agent 動態填入） -->
+  <span class="meta-text">來源任務：把 clip 匯出從瀏覽器端 MediaRecorder 改成伺服器端 FFmpeg 背景渲染</span>
+</div>
+
+<main id="main-content">
+  <div class="wrap">
+    <h1>決策日誌：clip 匯出改後端渲染</h1>
+    <p class="subtitle">實作過程中，每次偏離計畫或遇到計畫沒交代的岔路就記一筆。這份工件會<strong>持續更新</strong>，不是每筆都開新檔案。</p>
+
+    <h2>時間軸</h2>
+    <div class="timeline">
+      <!-- INSERT: 決策日誌條目，每筆含 timestamp/當下選擇/理由/擱置疑點，是否為保守選擇。以下為示意假資料。 -->
+      <div class="timeline-item">
+        <div class="timeline-time">14:02 — 輪詢間隔</div>
+        <div class="timeline-card">
+          <p class="field-label">當下選擇 <span class="conservative-tag">保守選擇</span></p>
+          <p>計畫沒說輪詢間隔要多久，我暫用 2 秒。</p>
+          <p class="field-label">為什麼這樣選</p>
+          <p>2 秒是團隊其他背景任務輪詢慣用的間隔，不會對後端造成明顯負擔，先求穩不求快。</p>
+          <p class="field-label">擱置的疑點</p>
+          <p>沒有壓測過大量並發匯出時 2 秒輪詢的後端負載，下一輪需要補壓測。</p>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-time">15:30 — worker 資源設定</div>
+        <div class="timeline-card">
+          <p class="field-label">當下選擇 <span class="conservative-tag">保守選擇</span></p>
+          <p>渲染 worker 給了獨立的 512MB 記憶體上限與併發數 2。</p>
+          <p class="field-label">為什麼這樣選</p>
+          <p>對應 A1 盲點卡 05（半年前因記憶體排擠被 revert），先用保守值避免重蹈覆轍，之後再依實際負載調高。</p>
+          <p class="field-label">擱置的疑點</p>
+          <p>512MB／併發 2 是否足夠應付尖峰時段還沒驗證，需要在 staging 跑一次真實流量模擬。</p>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-time">17:15 — 座標轉換的精度</div>
+        <div class="timeline-card">
+          <p class="field-label">當下選擇</p>
+          <p>座標轉換函式用浮點數計算，沒有額外做四捨五入。</p>
+          <p class="field-label">為什麼這樣選</p>
+          <p>計畫裡沒提到精度要求，浮點數是最直覺的預設做法，且目前測試案例都通過。</p>
+          <p class="field-label">擱置的疑點</p>
+          <p>如果影片解析度極端（例如超寬螢幕錄製），浮點誤差是否會造成標註明顯位移，還沒驗證邊界案例。</p>
+        </div>
+      </div>
+    </div>
+
+    <h2>折進下一輪計畫的 3 個要點</h2>
+    <div class="summary-card">
+      <!-- INSERT: 濃縮後的 3 個要點，agent 動態產生 -->
+      <ol>
+        <li>需要針對「2 秒輪詢間隔＋大量並發匯出」補一次壓測，確認後端負載可接受。</li>
+        <li>worker 的 512MB／併發 2 是保守初始值，需在 staging 跑真實流量模擬後再決定是否調整。</li>
+        <li>座標轉換函式的浮點精度在極端解析度下的邊界案例尚未驗證，下一輪需要補測試案例。</li>
+      </ol>
+    </div>
+  </div>
+</main>
+
+<footer>由 <strong>know-your-unknowns</strong> skill 產生 · 此工件為自包含 HTML，可離線開啟、可直接分享</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var STORAGE_KEY = 'kyu-theme';
+  var stored = null;
+  try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+  if (stored === 'dark' || stored === 'light') { root.setAttribute('data-theme', stored); }
+  function currentTheme() {
+    var attr = root.getAttribute('data-theme');
+    if (attr) return attr;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  function init() {
+    var btn = document.getElementById('theme-toggle');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        var next = currentTheme() === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
+      });
+    }
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
+})();
+</script>
+</body>
+</html>

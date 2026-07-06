@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 520" role="img" aria-labelledby="kyu-legend-title kyu-legend-desc">
+  <title id="kyu-legend-title">未知數四象限圖例</title>
+  <desc id="kyu-legend-desc">
+    橫軸：你是否意識到它？（左：沒意識到／右：有意識到）。
+    縱軸：你是否掌握它？（上：掌握／下：不掌握）。
+    右上＝已知已知（灰藍）；右下＝已知未知（琥珀）；左上＝未知已知（紫）；左下＝未知未知（紅珊瑚）。
+  </desc>
+
+  <style>
+    .kyu-bg { fill: #fafafa; }
+    .kyu-cell-text { font-family: -apple-system, "Segoe UI", "Noto Sans TC", "PingFang TC", sans-serif; }
+    .kyu-title { font-size: 20px; font-weight: 700; fill: #1a1a1a; }
+    .kyu-en { font-size: 12px; font-weight: 600; opacity: 0.85; }
+    .kyu-oneliner { font-size: 12px; opacity: 0.92; }
+    .kyu-axis-label { font-family: -apple-system, "Segoe UI", "Noto Sans TC", "PingFang TC", sans-serif; font-size: 13px; fill: #5c5c66; }
+    .kyu-axis-line { stroke: #5c5c66; stroke-width: 1.5; opacity: 0.5; }
+
+    @media (prefers-color-scheme: dark) {
+      .kyu-bg { fill: #0d1117; }
+      .kyu-title { fill: #e6edf3; }
+      .kyu-axis-label { fill: #8b949e; }
+      .kyu-axis-line { stroke: #8b949e; }
+    }
+  </style>
+
+  <rect class="kyu-bg" x="0" y="0" width="520" height="520" rx="16" />
+
+  <text class="kyu-title kyu-cell-text" x="260" y="34" text-anchor="middle">未知數四象限</text>
+
+  <!-- 軸線 -->
+  <line class="kyu-axis-line" x1="260" y1="70" x2="260" y2="470" />
+  <line class="kyu-axis-line" x1="60" y1="270" x2="460" y2="270" />
+
+  <!-- 橫軸標籤 -->
+  <text class="kyu-axis-label" x="70" y="490" text-anchor="start">← 沒意識到</text>
+  <text class="kyu-axis-label" x="450" y="490" text-anchor="end">有意識到 →</text>
+  <text class="kyu-axis-label" x="260" y="505" text-anchor="middle">你是否意識到它？</text>
+
+  <!-- 縱軸標籤 -->
+  <text class="kyu-axis-label" x="35" y="80" text-anchor="middle" transform="rotate(-90 35 80)">↑ 掌握</text>
+  <text class="kyu-axis-label" x="35" y="460" text-anchor="middle" transform="rotate(-90 35 460)">不掌握 ↓</text>
+
+  <!-- 左上：未知已知 Unknown Knowns（紫） -->
+  <g>
+    <rect x="60" y="70" width="200" height="200" rx="12" fill="#7c3aed" fill-opacity="0.16" stroke="#7c3aed" stroke-width="2" />
+    <text class="kyu-cell-text" x="160" y="150" text-anchor="middle" font-size="16" font-weight="700" fill="#7c3aed">未知已知</text>
+    <text class="kyu-cell-text kyu-en" x="160" y="170" text-anchor="middle" fill="#7c3aed">Unknown Knowns</text>
+    <text class="kyu-cell-text kyu-oneliner" x="160" y="200" text-anchor="middle" fill="#7c3aed">
+      <tspan x="160" dy="0">答案已存在，只是</tspan>
+      <tspan x="160" dy="16">不在你腦中</tspan>
+    </text>
+  </g>
+
+  <!-- 右上：已知已知 Known Knowns（灰藍） -->
+  <g>
+    <rect x="260" y="70" width="200" height="200" rx="12" fill="#375074" fill-opacity="0.16" stroke="#375074" stroke-width="2" />
+    <text class="kyu-cell-text" x="360" y="150" text-anchor="middle" font-size="16" font-weight="700" fill="#375074">已知已知</text>
+    <text class="kyu-cell-text kyu-en" x="360" y="170" text-anchor="middle" fill="#375074">Known Knowns</text>
+    <text class="kyu-cell-text kyu-oneliner" x="360" y="200" text-anchor="middle" fill="#375074">
+      <tspan x="360" dy="0">你知道，而且你</tspan>
+      <tspan x="360" dy="16">知道你知道</tspan>
+    </text>
+  </g>
+
+  <!-- 左下：未知未知 Unknown Unknowns（紅珊瑚） -->
+  <g>
+    <rect x="60" y="270" width="200" height="200" rx="12" fill="#c62828" fill-opacity="0.16" stroke="#c62828" stroke-width="2" />
+    <text class="kyu-cell-text" x="160" y="350" text-anchor="middle" font-size="16" font-weight="700" fill="#c62828">未知未知</text>
+    <text class="kyu-cell-text kyu-en" x="160" y="370" text-anchor="middle" fill="#c62828">Unknown Unknowns</text>
+    <text class="kyu-cell-text kyu-oneliner" x="160" y="400" text-anchor="middle" fill="#c62828">
+      <tspan x="160" dy="0">你根本不知道</tspan>
+      <tspan x="160" dy="16">有這回事</tspan>
+    </text>
+  </g>
+
+  <!-- 右下：已知未知 Known Unknowns（琥珀） -->
+  <g>
+    <rect x="260" y="270" width="200" height="200" rx="12" fill="#8a5a00" fill-opacity="0.16" stroke="#8a5a00" stroke-width="2" />
+    <text class="kyu-cell-text" x="360" y="350" text-anchor="middle" font-size="16" font-weight="700" fill="#8a5a00">已知未知</text>
+    <text class="kyu-cell-text kyu-en" x="360" y="370" text-anchor="middle" fill="#8a5a00">Known Unknowns</text>
+    <text class="kyu-cell-text kyu-oneliner" x="360" y="400" text-anchor="middle" fill="#8a5a00">
+      <tspan x="360" dy="0">你知道你不知道，</tspan>
+      <tspan x="360" dy="16">打算之後再問</tspan>
+    </text>
+  </g>
+</svg>

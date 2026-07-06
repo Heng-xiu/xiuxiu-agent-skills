@@ -1,0 +1,294 @@
+<!doctype html>
+<!--
+  blindspot-cards.html — A1 盲點掃描（Blindspot Pass）工件模板
+  對付象限：未知未知 Unknown Unknowns（見 references/quadrants.md）
+
+  本檔已填入示意假資料（情境：把 clip 匯出從瀏覽器端 MediaRecorder 改成
+  伺服器端 FFmpeg 背景渲染，對應 SKILL_SPEC 第 6 節案例走查），用來驗證排版。
+  agent 產出實際工件時，請替換以下標示 <!-- INSERT --> 的區塊為真實掃描結果，
+  其餘結構（卡片欄位、底部 prompt 區塊）維持不變。
+-->
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>盲點掃描 — clip 匯出伺服器端渲染改動</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fafafa; --surface: #ffffff; --surface-2: #f2f2f5; --border: #e2e2e6;
+    --text: #1a1a1a; --text-muted: #5c5c66; --accent: #0d9488; --accent-contrast: #ffffff;
+    --q-known-known: #375074; --q-known-unknown: #8a5a00; --q-unknown-known: #7c3aed; --q-unknown-unknown: #c62828;
+    --p-pre: #137333; --p-during: #1656c9; --p-post: #5b21b6;
+    --radius: 12px; --space-1: 8px; --space-2: 16px; --space-3: 24px; --space-4: 32px; --space-6: 48px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --transition-fast: 160ms ease-out;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1117; --surface: #161b22; --surface-2: #1c2129; --border: #30363d;
+      --text: #e6edf3; --text-muted: #8b949e; --accent: #2dd4bf; --accent-contrast: #062723;
+      --q-known-known: #93a8c7; --q-known-unknown: #f2c14e; --q-unknown-known: #cf9dfa; --q-unknown-unknown: #ff8a80;
+      --p-pre: #5ee69c; --p-during: #79b8ff; --p-post: #b79cf7;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1117; --surface: #161b22; --surface-2: #1c2129; --border: #30363d;
+    --text: #e6edf3; --text-muted: #8b949e; --accent: #2dd4bf; --accent-contrast: #062723;
+    --q-known-known: #93a8c7; --q-known-unknown: #f2c14e; --q-unknown-known: #cf9dfa; --q-unknown-unknown: #ff8a80;
+    --p-pre: #5ee69c; --p-during: #79b8ff; --p-post: #b79cf7;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  img, svg { max-width: 100%; }
+
+  .skip-link { position: absolute; left: -999px; top: auto; background: var(--accent); color: var(--accent-contrast); padding: 8px 16px; border-radius: 8px; z-index: 100; }
+  .skip-link:focus { left: 16px; top: 16px; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 var(--space-3); }
+
+  .topbar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .topbar-inner { max-width: 1100px; margin: 0 auto; padding: var(--space-2) var(--space-3); display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+  .brand { font-weight: 700; font-size: 0.95rem; }
+  .brand small { display: block; font-weight: 400; color: var(--text-muted); font-size: 0.75rem; }
+
+  .theme-toggle { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 999px; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color var(--transition-fast), transform var(--transition-fast); flex-shrink: 0; }
+  .theme-toggle:hover { border-color: var(--accent); }
+  .theme-toggle:active { transform: scale(0.94); }
+  .theme-toggle .icon-sun { display: none; }
+  .theme-toggle .icon-moon { display: inline-flex; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline-flex; }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline-flex; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+  }
+
+  .meta-bar { max-width: 1100px; margin: 0 auto; padding: var(--space-2) var(--space-3) 0; display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
+  .badge { display: inline-flex; align-items: center; gap: 0.4em; padding: 0.28em 0.75em; border-radius: 999px; font-size: 0.78rem; font-weight: 600; border: 1px solid var(--border); white-space: nowrap; background: var(--surface); }
+  .badge .dot { width: 0.55em; height: 0.55em; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .badge-phase-pre { border-color: var(--p-pre); color: var(--p-pre); }
+  .badge-phase-pre .dot { background: var(--p-pre); }
+  .badge-q-unknown-unknown { border-color: var(--q-unknown-unknown); color: var(--q-unknown-unknown); }
+  .badge-q-unknown-unknown .dot { background: var(--q-unknown-unknown); }
+  .meta-text { font-size: 0.78rem; color: var(--text-muted); }
+
+  main { padding: var(--space-4) 0 var(--space-6); }
+  h1 { font-size: 1.6rem; margin: 0 0 var(--space-1); }
+  h2 { font-size: 1.2rem; margin: var(--space-4) 0 var(--space-2); }
+  h3 { font-size: 1.02rem; margin: 0 0 var(--space-1); }
+  p { margin: 0 0 var(--space-2); }
+  .subtitle { color: var(--text-muted); margin-bottom: var(--space-3); }
+
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: var(--space-3); border-left: 4px solid var(--q-unknown-unknown);
+  }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-1); margin-bottom: var(--space-1); flex-wrap: wrap; }
+  .card-num { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+
+  .tag { display: inline-flex; align-items: center; gap: 0.35em; font-size: 0.72rem; font-weight: 700; padding: 0.2em 0.6em; border-radius: 6px; border: 1px solid var(--border); }
+  .tag-landmine { color: var(--q-unknown-unknown); border-color: var(--q-unknown-unknown); }
+  .tag-convention { color: var(--q-known-known); border-color: var(--q-known-known); }
+  .tag-missing-concept { color: var(--q-unknown-known); border-color: var(--q-unknown-known); }
+  .tag-history { color: var(--p-post); border-color: var(--p-post); }
+
+  .field-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: var(--space-2) 0 2px; font-weight: 700; }
+  .field-label:first-of-type { margin-top: var(--space-1); }
+
+  .code-block { position: relative; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: var(--space-2); padding-top: calc(var(--space-2) + 30px); font-family: var(--font-mono); font-size: 0.85rem; white-space: pre-wrap; word-break: break-word; overflow-x: auto; }
+  .copy-btn { position: absolute; top: 8px; right: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 6px; padding: 4px 10px; font-size: 0.75rem; cursor: pointer; font-family: var(--font-sans); }
+  .copy-btn:hover { border-color: var(--accent); }
+
+  .prompt-section { margin-top: var(--space-4); }
+
+  footer { border-top: 1px solid var(--border); padding: var(--space-3); text-align: center; color: var(--text-muted); font-size: 0.8rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+    html { scroll-behavior: auto; }
+  }
+  @media (max-width: 640px) { .topbar-inner, .meta-bar, .wrap { padding-left: var(--space-2); padding-right: var(--space-2); } }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到主要內容</a>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">Know Your Unknowns <small>A1 · 盲點掃描 Blindspot Pass</small></div>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切換深色／淺色主題">
+      <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="meta-bar" role="group" aria-label="工件中繼資訊">
+  <span class="badge badge-phase-pre"><span class="dot" aria-hidden="true"></span>階段：實施前 Pre</span>
+  <span class="badge badge-q-unknown-unknown"><span class="dot" aria-hidden="true"></span>對付：未知未知 Unknown Unknowns</span>
+  <!-- INSERT: 產生時間（agent 動態填入，例如工件產出當下的 ISO 時間戳） -->
+  <span class="meta-text">產生時間：2026-07-05 14:32</span>
+  <!-- INSERT: 來源任務（agent 動態填入，一句話描述使用者的目標改動） -->
+  <span class="meta-text">來源任務：把 clip 匯出從瀏覽器端 MediaRecorder 改成伺服器端 FFmpeg 背景渲染</span>
+</div>
+
+<main id="main-content">
+  <div class="wrap">
+    <h1>盲點掃描：clip 匯出改後端渲染</h1>
+    <p class="subtitle">
+      <!-- INSERT: 掃描範圍摘要（agent 動態填入，例如讀了幾個檔案、幾筆 commit、幾次 revert） -->
+      已讀取 <code>services/export/</code> 相關檔案（共 23 個）、近 60 筆 git log、2 次被 revert 的嘗試、1 份進行中的 migration。以下是照亮的盲點——<strong>此步尚未寫任何實作程式碼</strong>。
+    </p>
+
+    <div class="grid">
+      <!-- INSERT: 盲點卡清單，每張含 type/why-it-bites/mitigation，5–8 張為佳。以下為示意假資料。 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">盲點 01 / 06</span>
+          <span class="tag tag-landmine">地雷 Landmine</span>
+        </div>
+        <h3>MediaRecorder 的 Safari 不相容是這次改動的動機，但舊路徑仍被一支測試依賴</h3>
+        <p class="field-label">為什麼會咬你</p>
+        <p><code>tests/export/legacy_recorder.spec.ts</code> 直接 mock 了瀏覽器端 <code>MediaRecorder</code>；如果直接砍掉舊路徑，這支測試會變成殭屍測試，之後沒人敢刪也沒人會修。</p>
+        <p class="field-label">規避作法</p>
+        <p>先確認舊路徑的下線時程與 feature flag，測試要嘛同步遷移、要嘛明確標記為「待汰除」再排進技術債清單。</p>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">盲點 02 / 06</span>
+          <span class="tag tag-landmine">地雷 Landmine</span>
+        </div>
+        <h3>匯出的 signed URL 有過期邏輯，改後端渲染後 TTL 語意會變</h3>
+        <p class="field-label">為什麼會咬你</p>
+        <p>目前 TTL 是「檔案產生後 15 分鐘」，前提是產生幾乎即時。改成背景 job 後，使用者可能在檔案「還沒生出來」時就拿到連結，TTL 起算點若沒重新定義，會出現「連結一開就過期」的事故。</p>
+        <p class="field-label">規避作法</p>
+        <p>TTL 起算點要改成「渲染完成時」而非「請求發起時」，並在 A2 訪談把這個決策明確問出來。</p>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">盲點 03 / 06</span>
+          <span class="tag tag-convention">慣例 Convention</span>
+        </div>
+        <h3>本專案背景任務一律走 <code>jobs/queue.ts</code> 的重試慣例（指數退避＋最多 3 次）</h3>
+        <p class="field-label">為什麼會咬你</p>
+        <p>如果 FFmpeg 渲染 worker 自己另外寫一套重試邏輯，會跟現有的告警/監控儀表板脫鉤，值班的人會看不到這個 job 的失敗率。</p>
+        <p class="field-label">規避作法</p>
+        <p>渲染 job 直接掛進既有 queue 抽象層，沿用它的重試與監控慣例，不要另起爐灶。</p>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">盲點 04 / 06</span>
+          <span class="tag tag-missing-concept">失落的概念 Missing concept</span>
+        </div>
+        <h3>標註（annotation）目前是用「螢幕座標」存的，不是「影格座標」</h3>
+        <p class="field-label">為什麼會咬你</p>
+        <p>前端渲染時標註疊圖用的是使用者當下的螢幕座標系；搬到伺服器端渲染，輸入的是原始影格，兩者座標系不同。這個概念沒有寫在任何文件裡，只存在寫這段程式碼的人腦中。</p>
+        <p class="field-label">規避作法</p>
+        <p>伺服器端渲染前，需要一段座標轉換層，把螢幕座標投影回影格座標；這件事必須在 A3（理解驗證表）明確標出來確認。</p>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">盲點 05 / 06</span>
+          <span class="tag tag-history">歷史教訓 History</span>
+        </div>
+        <h3>半年前有一次「把渲染搬到 worker」的嘗試被 revert 了</h3>
+        <p class="field-label">為什麼會咬你</p>
+        <p><code>git log</code> 裡的 commit <code>a1b2c3d</code> 標題是「revert: move export rendering to worker (perf regression)」。當時的問題是 worker 記憶體吃太兇導致其他 job 被排擠，但沒有留下更細的根因分析。</p>
+        <p class="field-label">規避作法</p>
+        <p>這次動手前，先找出當時的 worker 資源設定與併發數，避免重蹈覆轍；建議把資源隔離（獨立 worker pool）當成 A4 計畫裡的硬性條件。</p>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">盲點 06 / 06</span>
+          <span class="tag tag-convention">慣例 Convention</span>
+        </div>
+        <h3>所有面向使用者的錯誤訊息都要過 <code>i18n/errors.ts</code> 的白名單</h3>
+        <p class="field-label">為什麼會咬你</p>
+        <p>背景渲染失敗時，若直接把 FFmpeg 的原始 stderr 訊息丟給前端顯示，會被 review 打回票——這是團隊不成文但很硬性的規定。</p>
+        <p class="field-label">規避作法</p>
+        <p>新增一組對應的使用者友善錯誤碼，並在 A2 訪談時確認錯誤分類（暫時性失敗 vs. 永久性失敗）。</p>
+      </article>
+    </div>
+
+    <section class="prompt-section">
+      <h2>改良版實作 prompt</h2>
+      <p><!-- INSERT: 一句話說明這段 prompt 是把上面所有盲點壓縮成的約束條件 -->以下把六張盲點卡壓縮成一段可以直接沿用到下一步（A2 訪談／A4 計畫）的約束條件：</p>
+      <div class="code-block">
+        <button class="copy-btn" type="button" data-copy-target="improved-prompt">複製</button>
+        <div id="improved-prompt"><!-- INSERT: 改良版 prompt 全文，agent 動態產生 -->把 clip 匯出從瀏覽器端 MediaRecorder 改成伺服器端 FFmpeg 背景渲染時，請遵守：
+(1) 舊的前端匯出路徑與其測試在遷移完成前不可直接刪除，需先確認下線時程；
+(2) signed download URL 的 TTL 起算點要改成「渲染完成時」而非「請求發起時」；
+(3) 背景 job 一律掛進 jobs/queue.ts 既有的重試與監控抽象層，不要另起爐灶；
+(4) 標註座標需要一段「螢幕座標 → 影格座標」的轉換層，這是目前程式碼裡沒有文件化的隱藏概念；
+(5) 渲染 worker 需要獨立資源池，半年前曾因記憶體排擠其他 job 被 revert 過；
+(6) 所有面向使用者的錯誤訊息需先分類（暫時性/永久性）再過 i18n/errors.ts 白名單。
+先不要寫任何實作程式碼，等使用者確認後再進入下一步。</div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>由 <strong>know-your-unknowns</strong> skill 產生 · 此工件為自包含 HTML，可離線開啟、可直接分享</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var STORAGE_KEY = 'kyu-theme';
+  var stored = null;
+  try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+  if (stored === 'dark' || stored === 'light') { root.setAttribute('data-theme', stored); }
+  function currentTheme() {
+    var attr = root.getAttribute('data-theme');
+    if (attr) return attr;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  function init() {
+    var btn = document.getElementById('theme-toggle');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        var next = currentTheme() === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
+      });
+    }
+    var copyBtns = document.querySelectorAll('.copy-btn');
+    for (var i = 0; i < copyBtns.length; i++) {
+      (function (b) {
+        b.addEventListener('click', function () {
+          var targetId = b.getAttribute('data-copy-target');
+          var target = targetId ? document.getElementById(targetId) : null;
+          if (!target) return;
+          var text = target.innerText || target.textContent || '';
+          var original = b.textContent;
+          function done() { b.textContent = '已複製'; setTimeout(function () { b.textContent = original; }, 1600); }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done, done);
+          } else {
+            var ta = document.createElement('textarea');
+            ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            document.body.removeChild(ta); done();
+          }
+        });
+      })(copyBtns[i]);
+    }
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
+})();
+</script>
+</body>
+</html>
