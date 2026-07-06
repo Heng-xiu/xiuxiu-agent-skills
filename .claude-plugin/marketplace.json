@@ -15,7 +15,8 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/delegation-review"
+        "./skills/delegation-review",
+        "./skills/know-your-unknowns"
       ]
     },
     {
