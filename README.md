@@ -23,6 +23,7 @@ This repository currently includes:
 - `content-pipeline`: Turn a rough content idea into platform-specific social drafts and posting recommendations.
 - `verify-ai-server-with-device-env`: Verify that a Dockerized AI inference server can run on a target GPU device. Covers host CUDA/driver compatibility, Docker NVIDIA runtime, compose GPU config, model loading, and API health.
 - `know-your-unknowns`: Surface the unknowns in a coding task before, during, and after implementation — blindspot scan, blast-radius interview, decision log, and a pre-merge comprehension quiz, each emitting a self-contained HTML artifact.
+- `portfolio-forge`: Forge personal information into a beautiful, production-ready personal website — content doc as single source of truth, per-section reference images, adversarial design review, high-fidelity replication, headless per-section QA, and reversible deployment. Also published standalone with a promo page at [heng-xiu.github.io/portfolio-forge](https://heng-xiu.github.io/portfolio-forge/).
 
 ## Disclaimer
 
@@ -61,7 +62,7 @@ Alternatively, directly install the plugin via:
 /plugin install content-skills@xiuxiu-agent-skills
 ```
 
-After installing the plugin, you can use the skill by mentioning it. For instance: "Use the delegation-review skill to review all open issues for autonomous handoff readiness." Or: "Use content-pipeline to turn this rough idea into FB, Threads, IG, X, and Xiaohongshu drafts." Or: "Use verify-ai-server-with-device-env to check if my Docker inference server will run on this GPU machine." Or: "Use know-your-unknowns to find my blindspots before I start this change."
+After installing the plugin, you can use the skill by mentioning it. For instance: "Use the delegation-review skill to review all open issues for autonomous handoff readiness." Or: "Use content-pipeline to turn this rough idea into FB, Threads, IG, X, and Xiaohongshu drafts." Or: "Use verify-ai-server-with-device-env to check if my Docker inference server will run on this GPU machine." Or: "Use know-your-unknowns to find my blindspots before I start this change." Or: "Use portfolio-forge to turn my profile into a personal website."
 
 ## Codex and other agents
 

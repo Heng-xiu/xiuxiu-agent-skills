@@ -20,6 +20,15 @@
       ]
     },
     {
+      "name": "web-design-skills",
+      "description": "Skills for forging personal websites and design-quality frontend work",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/portfolio-forge"
+      ]
+    },
+    {
       "name": "content-skills",
       "description": "Skills for turning rough ideas into multi-platform social content workflows",
       "source": "./",
