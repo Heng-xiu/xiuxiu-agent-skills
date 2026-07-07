@@ -47,7 +47,7 @@ description: 把個人資訊鍛造成美感極佳的個人網站/作品集。內
 照 `workflows/adversarial-design-review.md`。自己先用 Read 逐張看圖挑戰,再交給使用者評審。不過關的單張重生。**這一步會來回幾輪,是正常的,不要跳過。**
 
 ### 階段 4:高保真複刻
-照 `workflows/frontend-replication.md`。把「定稿參考圖 + CONTENT.md + 真實素材」整包交給 Codex Frontend App Builder,以 1:1 復刻為目標,資料驅動 + 動畫 + RWD。
+照 `workflows/frontend-replication.md`。把「定稿參考圖 + CONTENT.md + 真實素材」整包交給 Codex Frontend App Builder,以 1:1 復刻為目標,資料驅動 + 動畫 + RWD。動態層從 `references/motion-effects-library.md`(實戰驗證過的 11 個效果配方)挑選並逐項寫進複刻 prompt——鐵律:動態服務主題、尊重 prefers-reduced-motion、一頁最多 1 個大效果。
 
 ### 階段 5:逐段 QA
 照 `workflows/headless-qa-and-deploy.md` 前半。puppeteer 真實捲動逐 section 截圖,對照參考圖用 `references/qa-checklist.md` 驗收。不到位退回階段 4。

@@ -35,7 +35,7 @@ codex exec --skip-git-repo-check --full-auto "使用 build-web-apps plugin 的 F
 - Projects 與 Writing 資料驅動:各用一個資料陣列(title/desc/url/img/date),日後新增只改陣列
 - Projects grid 用 auto-fill 可擴展,底部有『更多專案 →』連結
 - Writing 禁裸 URL:標題即超連結,每項尾端『閱讀全文 →』強調色連結
-- 動畫:section 進場 stagger fade-up;裝飾大字輕微 parallax;尊重 prefers-reduced-motion
+- 動畫:從 `references/motion-effects-library.md` 挑 3–6 個效果(基本盤 reveal 必上,最多 1 個大效果),照庫裡「交給 Codex 的 prompt 寫法」逐項點名寫進本 prompt;全部尊重 prefers-reduced-motion,hover 類僅 pointer:fine
 - 色盤 [hex];英文襯線 [字型],中文 [字型](自托管或 fontsource 避免 FOUT)
 - RWD:桌機忠實還原;行動版單欄降級,hero 照片改上圖下文
 - 完成後 git init + commit,跑 production build 確認成功,回報:目錄結構、build 輸出路徑、本機預覽指令
