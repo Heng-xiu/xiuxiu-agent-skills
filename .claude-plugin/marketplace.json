@@ -25,7 +25,8 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/portfolio-forge"
+        "./skills/portfolio-forge",
+        "./skills/site-teardown"
       ]
     },
     {

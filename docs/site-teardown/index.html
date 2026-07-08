@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>site-teardown — 給它一個網址，拿回一份看得懂的拆解筆記</title>
+<meta name="description" content="site-teardown 是一個 AI 技能：看到喜歡的網站，讓你的 AI 助手替你拆開來記錄——長什麼樣、為什麼好看、背後怎麼做、接了哪些服務，變成一份能跟客戶討論的筆記。">
+<meta property="og:title" content="site-teardown — 網站拆解筆記技能">
+<meta property="og:description" content="給它一個網址，拿回一份看得懂的拆解筆記。">
+<style>
+  :root{
+    --paper:#EAEBE4; --paper-raised:#F4F5EF; --paper-sunken:#DEE0D7;
+    --ink:#17191B; --mute:#6E7168; --mute-2:#8B8E82;
+    --line:#CDD0C4; --line-strong:#A9AC9C;
+    --red:#B8391F; --red-ink:#9C2F19; --red-soft:rgba(184,57,31,.09);
+    --steel:#3C5A72; --steel-soft:rgba(60,90,114,.10);
+    --serif:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP","Noto Serif TC",serif;
+    --sans:"Hiragino Sans","Noto Sans JP","PingFang TC","Microsoft JhengHei",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#15171A; --paper-raised:#1D2024; --paper-sunken:#0F1113;
+      --ink:#E9EAE2; --mute:#9A9D91; --mute-2:#7C7F73;
+      --line:#33362E; --line-strong:#484B41;
+      --red:#E27A56; --red-ink:#F09274; --red-soft:rgba(226,122,86,.12);
+      --steel:#8FB2CC; --steel-soft:rgba(143,178,204,.13);
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:linear-gradient(var(--line) 1px, transparent 1px) 0 0/100% 44px, var(--paper);
+    color:var(--ink); font-family:var(--sans); line-height:1.8;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--steel);}
+  h1,h2,h3{font-family:var(--serif); font-weight:400; text-wrap:balance; margin:0;}
+  p{margin:0;}
+  .wrap{max-width:880px; margin:0 auto; padding:0 24px;}
+
+  /* corner github */
+  .gh-corner{
+    position:fixed; top:16px; right:16px; z-index:10; opacity:.55; transition:opacity .2s;
+  }
+  .gh-corner:hover{opacity:1;}
+  .gh-corner svg{width:26px; height:26px; fill:var(--ink); display:block;}
+
+  .hero{padding:110px 0 64px;}
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--red); display:flex; align-items:center; gap:10px; margin-bottom:24px;
+  }
+  .eyebrow::before{content:""; width:22px; height:1px; background:var(--red);}
+  .hero h1{font-size:clamp(32px,5.6vw,52px); line-height:1.35; margin-bottom:26px;}
+  .hero h1 em{font-style:normal; color:var(--red); border-bottom:2px solid var(--red);}
+  .lede{font-size:16px; color:var(--mute); max-width:36em; margin-bottom:36px;}
+  .cta-row{display:flex; gap:14px; flex-wrap:wrap;}
+  .btn{
+    display:inline-block; text-decoration:none; font-size:14px; padding:13px 26px;
+    border:1px solid var(--ink); color:var(--ink); background:var(--paper-raised);
+    transition:background .2s;
+  }
+  .btn:hover{background:var(--paper-sunken);}
+  .btn--primary{background:var(--red); border-color:var(--red); color:#FFF;}
+  .btn--primary:hover{background:var(--red-ink);}
+
+  section{padding:56px 0;}
+  .sec-head{margin-bottom:36px;}
+  .sec-head .eyebrow{color:var(--steel);}
+  .sec-head .eyebrow::before{background:var(--steel);}
+  .sec-head h2{font-size:clamp(24px,3.6vw,32px);}
+
+  /* five layers */
+  .layers{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line);}
+  .layer{background:var(--paper); padding:24px;}
+  .layer:first-child{grid-column:1/-1;}
+  @media (max-width:560px){ .layers{grid-template-columns:1fr;} }
+  .layer__num{font-family:var(--serif); font-style:italic; font-size:26px; color:var(--red); display:block; margin-bottom:10px;}
+  .layer h3{font-size:17px; margin-bottom:10px;}
+  .layer p{font-size:13.5px; color:var(--mute);}
+
+  /* mock notebook card */
+  .mock{
+    border-top:1px solid var(--line-strong); border-bottom:1px solid var(--line-strong);
+    padding:40px 0; margin-top:8px;
+  }
+  .mock-card{
+    background:var(--paper-raised); border:1px solid var(--line-strong); padding:26px;
+    display:grid; grid-template-columns:150px 1fr; gap:24px; max-width:680px; margin:0 auto;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);
+  }
+  @media (max-width:560px){ .mock-card{grid-template-columns:1fr;} }
+  .mock-shot{border:1px solid var(--line-strong); background:var(--paper); padding:6px;}
+  .mock-shot__img{height:120px; background:linear-gradient(var(--paper-sunken) 55%, var(--paper-raised) 55%); position:relative;}
+  .mock-shot__img::after{
+    content:"Aa"; position:absolute; left:10px; top:14px; font-family:var(--serif); font-size:22px; color:var(--mute-2);
+  }
+  .mock-shot small{font-family:var(--mono); font-size:9px; color:var(--mute-2); display:block; padding-top:6px; text-transform:uppercase; letter-spacing:.06em;}
+  .mock-right h3{font-size:19px; margin-bottom:6px;}
+  .mock-right .mock-sub{font-family:var(--mono); font-size:10px; color:var(--steel); text-transform:uppercase; letter-spacing:.08em; margin-bottom:14px;}
+  .mock-chips{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;}
+  .mock-chips span{font-family:var(--mono); font-size:10px; border:1px solid var(--line-strong); padding:4px 8px; color:var(--mute); background:var(--paper);}
+  .mock-quote{
+    font-family:var(--serif); font-size:13px; color:var(--red-ink); background:var(--red-soft);
+    border-left:2px solid var(--red); padding:10px 12px;
+  }
+  .mock-quote::before{content:"「作者的原話」"; display:block; font-family:var(--mono); font-size:9px; color:var(--red); letter-spacing:.05em; margin-bottom:4px;}
+  .mock-caption{text-align:center; font-size:12.5px; color:var(--mute-2); margin-top:18px;}
+
+  /* difference list */
+  .diffs{display:grid; gap:0; border-top:1px solid var(--line);}
+  .diff{display:grid; grid-template-columns:32px 1fr; gap:16px; padding:22px 0; border-bottom:1px solid var(--line);}
+  .diff__mark{
+    font-family:var(--serif); font-size:13px; color:var(--red); border:1.5px solid var(--red); border-radius:50%;
+    width:28px; height:28px; display:flex; align-items:center; justify-content:center; transform:rotate(-8deg); flex:none; margin-top:2px;
+  }
+  .diff h3{font-size:16.5px; margin-bottom:6px;}
+  .diff p{font-size:14px; color:var(--mute); max-width:40em;}
+
+  /* install */
+  .install-box{
+    background:var(--paper-raised); border:1px solid var(--line-strong); padding:26px;
+  }
+  .install-box__label{font-family:var(--mono); font-size:11px; color:var(--steel); text-transform:uppercase; letter-spacing:.08em; margin-bottom:14px;}
+  .prompt-text{
+    font-size:15px; line-height:2; background:var(--paper); border:1px dashed var(--line-strong);
+    padding:18px 20px; margin-bottom:14px; user-select:all;
+  }
+  .prompt-text b{color:var(--red-ink);}
+  .copy-btn{
+    font-family:var(--mono); font-size:12px; padding:9px 18px; cursor:pointer;
+    border:1px solid var(--ink); background:var(--paper); color:var(--ink);
+  }
+  .copy-btn:hover{background:var(--paper-sunken);}
+  .copy-btn:focus-visible{outline:2px solid var(--steel); outline-offset:2px;}
+  .install-alt{font-size:12px; color:var(--mute-2); margin-top:16px;}
+  .install-alt code{font-family:var(--mono); font-size:11px; background:var(--paper-sunken); padding:2px 6px;}
+
+  /* origin */
+  .origin p{font-size:14.5px; color:var(--mute); max-width:42em; margin-bottom:14px;}
+  .origin p b{color:var(--ink);}
+
+  footer{
+    border-top:1px solid var(--line-strong); margin-top:40px; padding:30px 0 60px;
+    font-family:var(--mono); font-size:11px; color:var(--mute-2);
+    display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap;
+  }
+  footer a{color:var(--mute-2);}
+</style>
+</head>
+<body>
+
+<a class="gh-corner" href="https://github.com/Heng-xiu/xiuxiu-agent-skills" aria-label="GitHub 原始碼" title="GitHub">
+  <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+</a>
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="eyebrow">AI 的技能 · site-teardown</p>
+    <h1>給它一個網址，<br>拿回一份<em>看得懂的拆解筆記</em>。</h1>
+    <p class="lede">看到一個很喜歡的網站，心裡常冒出兩個問題：它為什麼好看？背後是怎麼做的？這個技能讓你的 AI 助手替你把答案找出來——連同截圖、配色、技術細節，整理成一份日後隨時能翻的筆記。</p>
+    <div class="cta-row">
+      <a class="btn btn--primary" href="#install">開始使用</a>
+      <a class="btn" href="#what">它會留下什麼</a>
+    </div>
+  </header>
+
+  <section id="what">
+    <div class="sec-head">
+      <p class="eyebrow">五層記錄</p>
+      <h2>一個網站，拆成五件事記下來。</h2>
+    </div>
+    <div class="layers">
+      <div class="layer"><span class="layer__num">一</span><h3>長什麼樣子</h3><p>電腦版和手機版各存一張完整截圖。頁面上「捲動才出現」的內容也會先觸發再拍，不會拍到半成品。</p></div>
+      <div class="layer"><span class="layer__num">二</span><h3>為什麼好看</h3><p>把顏色一格一格抄下來、字體配對記下來、版面怎麼排寫清楚——美感從「感覺」變成「說得出口的道理」。</p></div>
+      <div class="layer"><span class="layer__num">三</span><h3>哪些地方會動</h3><p>預約、表單、即時更新的日曆……每個互動功能怎麼運作，一項一項記錄。</p></div>
+      <div class="layer"><span class="layer__num">四</span><h3>背後怎麼做的</h3><p>不聽別人怎麼說，直接讀網站的原始碼求證：用了什麼工具、哪些地方特別省成本。</p></div>
+      <div class="layer"><span class="layer__num">五</span><h3>可以怎麼用</h3><p>每一篇的結尾都是「這對我談案子有什麼用」——報價怎麼分級、方案怎麼提、隱私設計怎麼講給客戶聽。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <p class="eyebrow">成果長這樣</p>
+      <h2>像編輯用紅筆批註過的筆記。</h2>
+    </div>
+    <div class="mock">
+      <div class="mock-card">
+        <div class="mock-shot">
+          <div class="mock-shot__img"></div>
+          <small>Desktop · 1440px</small>
+        </div>
+        <div class="mock-right">
+          <p class="mock-sub">某間鋼琴教室 · 線上預約</p>
+          <h3>色彩從「鋼琴本身」提取</h3>
+          <div class="mock-chips"><span>琴鍵黑 #14120F</span><span>黃銅金 #BE9A4E</span><span>琴氈紅 #D40F28</span></div>
+          <div class="mock-quote">預約寫進店主的日曆，但客人的名字絕對不出現在網站上。</div>
+        </div>
+      </div>
+      <p class="mock-caption">每個網站一張卡：截圖、色票、字體、佈局示意，加上作者原話的紅筆批註。</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <p class="eyebrow">和「直接問 AI」差在哪</p>
+      <h2>三個不一樣的地方。</h2>
+    </div>
+    <div class="diffs">
+      <div class="diff">
+        <span class="diff__mark">実</span>
+        <div><h3>眼見為憑，不憑印象</h3><p>它會真的打開網頁截圖、真的讀原始碼。作者訪談沒講的細節（實際色碼、背後接了什麼服務），它自己去原始碼裡找。</p></div>
+      </div>
+      <div class="diff">
+        <span class="diff__mark">積</span>
+        <div><h3>越拆越有規律</h3><p>拆的不只是單一網站。拆到第五個、第十個，它會幫你整理出跨網站的規律——什麼行業配什麼調性、什麼場景用什麼技術，變成你自己的設計參考書。</p></div>
+      </div>
+      <div class="diff">
+        <span class="diff__mark">談</span>
+        <div><h3>拆完是拿來用的</h3><p>每篇筆記的落點不是「知識」，是「下次跟客戶開會可以直接講的話」。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="sec-head">
+      <p class="eyebrow">開始使用</p>
+      <h2>複製這段話，交給你的 AI。</h2>
+    </div>
+    <div class="install-box">
+      <p class="install-box__label">把這段話貼給 Claude Code（或你慣用的 AI 助手）</p>
+      <p class="prompt-text" id="promptText">請幫我安裝 <b>site-teardown</b> 這個技能（來源：GitHub 的 Heng-xiu/xiuxiu-agent-skills）。裝好之後，用它幫我拆解這個網站：<b>〔貼上你想拆解的網址〕</b></p>
+      <button class="copy-btn" id="copyBtn" type="button">複製這段話</button>
+      <p class="install-alt">習慣終端機的人也可以直接執行：<code>npx skills add Heng-xiu/xiuxiu-agent-skills --skill site-teardown</code></p>
+    </div>
+  </section>
+
+  <section class="origin">
+    <div class="sec-head">
+      <p class="eyebrow">誕生故事</p>
+      <h2>從一場「100 天做 100 個網站」的拆解開始。</h2>
+    </div>
+    <p>日本一間設計工作室發起了連續 100 天、每天用 AI 做一個新網站的企劃——拉麵店、玻璃瓶工廠、鋼琴教室，每天一個新行業。我們想把每一天的作品都認真拆開來學，需要一套<b>每次都一樣紮實</b>的記錄方法。</p>
+    <p>這個技能就是那套方法的沉澱：先截圖、再讀原始碼、寫成固定格式的筆記、累積跨站規律。現在它可以拆任何你感興趣的網站。</p>
+  </section>
+
+  <footer>
+    <span>site-teardown · 出自 <a href="../">xiuxiu-agent-skills</a></span>
+    <a href="https://github.com/Heng-xiu/xiuxiu-agent-skills/tree/main/skills/site-teardown">GitHub 上的原始碼</a>
+  </footer>
+
+</div>
+
+<script>
+  document.getElementById('copyBtn').addEventListener('click', function(){
+    var text = '請幫我安裝 site-teardown 這個技能（來源：GitHub 的 Heng-xiu/xiuxiu-agent-skills）。裝好之後，用它幫我拆解這個網站：〔貼上你想拆解的網址〕';
+    navigator.clipboard.writeText(text).then(function(){
+      var btn = document.getElementById('copyBtn');
+      btn.textContent = '已複製 ✓';
+      setTimeout(function(){ btn.textContent = '複製這段話'; }, 2000);
+    });
+  });
+</script>
+</body>
+</html>
