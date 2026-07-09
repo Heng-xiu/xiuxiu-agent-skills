@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>document.documentElement.classList.add('js-reveal');</script>
 <title>waitlist-launch — 產品還沒上線，先把想要的人留住</title>
 <meta name="description" content="waitlist-launch 是一個 AI 技能：新產品準備上線前，讓你的 AI 助手把「候補名單」頁面從頭做到上線——收信、擋機器人、做分享圖、上線前檢查一次到位。">
 <meta property="og:title" content="waitlist-launch — 候補名單上線技能">
@@ -28,39 +29,72 @@
     }
   }
   *{box-sizing:border-box;}
+  html{scroll-behavior:auto;}
   body{
     margin:0;
     background:linear-gradient(var(--line) 1px, transparent 1px) 0 0/100% 44px, var(--paper);
     color:var(--ink); font-family:var(--sans); line-height:1.8;
     -webkit-font-smoothing:antialiased;
+    position:relative;
   }
   a{color:var(--green);}
   a:focus-visible{ outline:2px solid var(--green); outline-offset:3px; border-radius:2px; }
   h1,h2,h3{font-family:var(--serif); font-weight:400; text-wrap:balance; margin:0;}
   p{margin:0;}
-  .wrap{max-width:880px; margin:0 auto; padding:0 24px;}
+  .wrap{max-width:880px; margin:0 auto; padding:0 24px; position:relative; z-index:2;}
 
-  .gh-corner{position:fixed; top:16px; right:16px; z-index:10; opacity:.55; transition:opacity .2s;}
-  .gh-corner:hover{opacity:1;}
+  /* paper grain — fixed, pointer-events:none, cheap procedural texture, never on a scrolling layer */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.5; mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.02 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: dark){ body::before{ opacity:.4; mix-blend-mode:screen; } }
+
+  /* scroll progress — thin ink line, GPU-only (transform, no layout thrash) */
+  .progress{ position:fixed; top:0; left:0; width:100%; height:2px; z-index:20; transform-origin:0 50%; transform:scaleX(0);
+    background:var(--green); }
+
+  /* scroll/load reveal — visible by default; only animates for JS + motion-ok visitors */
+  .js-reveal [data-reveal]{ opacity:0; transform:translateY(18px); transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); transition-delay:calc(var(--i, 0) * 70ms); }
+  .js-reveal [data-reveal].is-visible{ opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce){
+    .js-reveal [data-reveal]{ opacity:1; transform:none; transition:none; }
+  }
+
+  .gh-corner{position:fixed; top:16px; right:16px; z-index:10; opacity:.55; transition:opacity .2s, transform .3s cubic-bezier(.16,1,.3,1);}
+  .gh-corner:hover{opacity:1; transform:rotate(-6deg);}
   .gh-corner svg{width:26px; height:26px; fill:var(--ink); display:block;}
 
-  .hero{padding:110px 0 64px;}
+  .hero{padding:110px 0 64px; display:grid; grid-template-columns:1.15fr .85fr; gap:40px; align-items:center;}
+  @media (max-width:860px){ .hero{grid-template-columns:1fr;} }
+  .hero-copy{min-width:0;}
+  .hero-art{ display:flex; align-items:center; justify-content:center; }
+  @media (max-width:860px){ .hero-art{ display:none; } }
+  .hero-art svg{ width:100%; max-width:280px; height:auto; }
   .eyebrow{
     font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
     color:var(--green); display:flex; align-items:center; gap:10px; margin-bottom:24px;
   }
   .eyebrow::before{content:""; width:22px; height:1px; background:var(--green);}
-  .hero h1{font-size:clamp(32px,5.6vw,52px); line-height:1.35; margin-bottom:26px;}
-  .hero h1 em{font-style:normal; color:var(--green); border-bottom:2px solid var(--green);}
+  .hero h1{font-size:clamp(34px,6vw,58px); line-height:1.32; letter-spacing:-.01em; margin-bottom:26px;}
+  .hero h1 em{font-style:normal; color:var(--green); position:relative; display:inline-block;}
+  .hero h1 em::after{
+    content:""; position:absolute; left:0; right:0; bottom:-2px; height:2px; background:var(--green);
+    transform:scaleX(0); transform-origin:0 50%; transition:transform .9s cubic-bezier(.16,1,.3,1); transition-delay:.5s;
+  }
+  .js-reveal .hero h1 em::after{ transform:scaleX(0); }
+  .js-reveal .hero.is-loaded h1 em::after{ transform:scaleX(1); }
+  @media (prefers-reduced-motion: reduce){ .hero h1 em::after{ transform:scaleX(1); } }
   .lede{font-size:16px; color:var(--mute); max-width:38em; margin-bottom:36px;}
   .cta-row{display:flex; gap:14px; flex-wrap:wrap;}
   .btn{
     display:inline-block; text-decoration:none; font-size:14px; padding:13px 26px;
     border:1px solid var(--ink); color:var(--ink); background:var(--paper-raised);
-    transition:background .2s;
+    transition:background .2s, transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s;
   }
-  .btn:hover{background:var(--paper-sunken);}
-  .btn--primary{background:var(--green); border-color:var(--green); color:#FFF;}
+  .btn:hover{background:var(--paper-sunken); transform:translateY(-2px);}
+  .btn:active{transform:translateY(0); transition-duration:.05s;}
+  .btn--primary{background:var(--green); border-color:var(--green); color:#FFF; box-shadow:0 10px 24px -14px var(--green);}
   .btn--primary:hover{background:var(--green-ink);}
 
   section{padding:56px 0;}
@@ -69,11 +103,17 @@
   .sec-head .eyebrow::before{background:var(--amber);}
   .sec-head h2{font-size:clamp(24px,3.6vw,32px);}
 
-  /* six steps */
-  .steps{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line);}
-  .step{background:var(--paper); padding:24px;}
+  /* six steps — offset rhythm on wide screens instead of a flat matrix */
+  .steps{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); align-items:start;}
+  .step{background:var(--paper); padding:24px; transition:background .25s;}
+  .step:hover{background:var(--paper-raised);}
+  @media (min-width:720px){
+    .steps{grid-template-columns:repeat(3,1fr);}
+    .step:nth-child(2), .step:nth-child(5){ margin-top:30px; }
+  }
   @media (max-width:560px){ .steps{grid-template-columns:1fr;} }
-  .step__num{font-family:var(--serif); font-style:italic; font-size:26px; color:var(--green); display:block; margin-bottom:10px;}
+  .step__num{font-family:var(--serif); font-style:italic; font-size:26px; color:var(--green); display:block; margin-bottom:10px; transition:transform .3s cubic-bezier(.16,1,.3,1);}
+  .step:hover .step__num{ transform:translateX(3px); }
   .step h3{font-size:16.5px; margin-bottom:10px;}
   .step p{font-size:13.5px; color:var(--mute);}
 
@@ -86,7 +126,14 @@
     background:var(--paper-raised); border:1px solid var(--line-strong); padding:26px;
     display:grid; grid-template-columns:1fr 1fr; gap:24px; max-width:680px; margin:0 auto;
     box-shadow:0 1px 3px rgba(0,0,0,.06);
+    transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+    transition:transform .4s cubic-bezier(.16,1,.3,1), box-shadow .4s;
+    will-change:transform;
   }
+  @media (hover:hover) and (pointer:fine){
+    .mock-card:hover{ box-shadow:0 24px 48px -28px rgba(47,107,78,.35); }
+  }
+  @media (prefers-reduced-motion: reduce){ .mock-card{ transition:none; } }
   @media (max-width:560px){ .mock-card{grid-template-columns:1fr;} }
   .mock-form small{font-family:var(--mono); font-size:9px; color:var(--mute-2); display:block; margin-bottom:10px; text-transform:uppercase; letter-spacing:.06em;}
   .mock-input{border:1px solid var(--line-strong); background:var(--paper); padding:10px 12px; font-size:13px; color:var(--mute-2); margin-bottom:8px;}
@@ -103,27 +150,42 @@
 
   /* diffs */
   .diffs{display:grid; gap:0; border-top:1px solid var(--line);}
-  .diff{display:grid; grid-template-columns:32px 1fr; gap:16px; padding:22px 0; border-bottom:1px solid var(--line);}
+  .diff{
+    display:grid; grid-template-columns:32px 1fr; gap:16px; padding:22px 0 22px 16px; margin-left:-16px;
+    border-bottom:1px solid var(--line); border-left:2px solid transparent;
+    transition:border-color .3s, background .3s, padding-left .3s, margin-left .3s;
+  }
+  .diff:hover{ border-left-color:var(--green); background:var(--green-soft); padding-left:22px; margin-left:-16px; }
   .diff__mark{
     font-family:var(--serif); font-size:13px; color:var(--green); border:1.5px solid var(--green); border-radius:50%;
     width:28px; height:28px; display:flex; align-items:center; justify-content:center; transform:rotate(-8deg); flex:none; margin-top:2px;
+    transition:background .3s, color .3s, transform .3s cubic-bezier(.16,1,.3,1);
   }
+  .diff:hover .diff__mark{ background:var(--green); color:#FFF; transform:rotate(0deg) scale(1.06); }
   .diff h3{font-size:16.5px; margin-bottom:6px;}
   .diff p{font-size:14px; color:var(--mute); max-width:40em;}
 
   /* install */
-  .install-box{ background:var(--paper-raised); border:1px solid var(--line-strong); padding:26px; }
+  .install-box{
+    background:var(--paper-raised); border:1px solid var(--line-strong); padding:26px;
+    transition:border-color .3s, box-shadow .3s;
+  }
+  .install-box:focus-within, .install-box:hover{ border-color:var(--green); box-shadow:0 16px 36px -26px rgba(47,107,78,.4); }
   .install-box__label{font-family:var(--mono); font-size:11px; color:var(--green); text-transform:uppercase; letter-spacing:.08em; margin-bottom:14px;}
   .prompt-text{
     font-size:15px; line-height:2; background:var(--paper); border:1px dashed var(--line-strong);
     padding:18px 20px; margin-bottom:14px; user-select:all;
+    transition:border-color .3s;
   }
+  .install-box:hover .prompt-text{ border-color:var(--green); }
   .prompt-text b{color:var(--green-ink);}
   .copy-btn{
     font-family:var(--mono); font-size:12px; padding:9px 18px; cursor:pointer;
     border:1px solid var(--ink); background:var(--paper); color:var(--ink);
+    transition:background .2s, transform .15s cubic-bezier(.16,1,.3,1);
   }
   .copy-btn:hover{background:var(--paper-sunken);}
+  .copy-btn:active{transform:translateY(1px) scale(.98);}
   .copy-btn:focus-visible{outline:2px solid var(--green); outline-offset:2px;}
   .install-alt{font-size:12px; color:var(--mute-2); margin-top:16px;}
   .install-alt code{font-family:var(--mono); font-size:11px; background:var(--paper-sunken); padding:2px 6px;}
@@ -141,44 +203,60 @@
 </head>
 <body>
 
+<div class="progress" id="progress" aria-hidden="true"></div>
+
 <a class="gh-corner" href="https://github.com/Heng-xiu/xiuxiu-agent-skills" aria-label="GitHub 原始碼" title="GitHub">
   <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
 </a>
 
 <div class="wrap">
 
-  <header class="hero">
-    <p class="eyebrow">AI 的技能 · waitlist-launch</p>
-    <h1>產品還沒上線，<br>先把<em>想要的人留住</em>。</h1>
-    <p class="lede">新產品、新網站準備開賣，但還沒完全準備好？這個技能讓你的 AI 助手把一個「候補名單」頁面從頭做到上線——收信箱、擋住亂灌的機器人、做好分享出去好看的圖、上線前該檢查的事一次列清楚，讓你在正式開賣前，先把願意等你的人留住。</p>
-    <div class="cta-row">
-      <a class="btn btn--primary" href="#install">開始使用</a>
-      <a class="btn" href="#what">它會做哪些事</a>
+  <header class="hero" id="hero">
+    <div class="hero-copy">
+      <p class="eyebrow" data-reveal style="--i:0">AI 的技能 · waitlist-launch</p>
+      <h1 data-reveal style="--i:1">產品還沒上線，<br>先把<em>想要的人留住</em>。</h1>
+      <p class="lede" data-reveal style="--i:2">新產品、新網站準備開賣，但還沒完全準備好？這個技能讓你的 AI 助手把一個「候補名單」頁面從頭做到上線——收信箱、擋住亂灌的機器人、做好分享出去好看的圖、上線前該檢查的事一次列清楚，讓你在正式開賣前，先把願意等你的人留住。</p>
+      <div class="cta-row" data-reveal style="--i:3">
+        <a class="btn btn--primary" href="#install">開始使用</a>
+        <a class="btn" href="#what">它會做哪些事</a>
+      </div>
+    </div>
+    <div class="hero-art" data-reveal style="--i:2" aria-hidden="true">
+      <svg viewBox="0 0 220 220" fill="none">
+        <path d="M20 170 L70 120 L110 145 L200 45" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="170" r="4.5" fill="var(--paper)" stroke="var(--green)" stroke-width="2"/>
+        <circle cx="70" cy="120" r="4.5" fill="var(--paper)" stroke="var(--green)" stroke-width="2"/>
+        <circle cx="110" cy="145" r="4.5" fill="var(--paper)" stroke="var(--amber)" stroke-width="2"/>
+        <circle cx="200" cy="45" r="6" fill="var(--green)"/>
+        <path d="M186 45 L200 45 L200 59" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="12" y1="188" x2="212" y2="188" stroke="var(--line-strong)" stroke-width="1"/>
+        <line x1="12" y1="188" x2="12" y2="30" stroke="var(--line-strong)" stroke-width="1"/>
+      </svg>
     </div>
   </header>
 
   <section id="what">
-    <div class="sec-head">
+    <div class="sec-head" data-reveal>
       <p class="eyebrow">六件事，一次做齊</p>
       <h2>不只是一個表單，是一整套上線流程。</h2>
     </div>
     <div class="steps">
-      <div class="step"><span class="step__num">一</span><h3>先問清楚</h3><p>動工前就把關鍵問題問完：要收在哪個網址、寄信用的網域準備好了沒、品牌顏色長怎樣、有哪些社群帳號要放上去。少走回頭路。</p></div>
-      <div class="step"><span class="step__num">二</span><h3>把頁面做出來</h3><p>一個收 email 的頁面，背後接一個不會弄丟名單的儲存系統，就算之後要接電子報服務，也是「錦上添花」而不是「沒接就會漏名單」。</p></div>
-      <div class="step"><span class="step__num">三</span><h3>擋住機器人</h3><p>三層機制擋住亂灌名單的程式和洗版行為，但不會誤擋真的想留信箱的人。</p></div>
-      <div class="step"><span class="step__num">四</span><h3>讓人放心分享</h3><p>分享到社群時有好看的預覽圖，成功留下信箱後，順手就能把連結轉發給同樣在等的朋友。</p></div>
-      <div class="step"><span class="step__num">五</span><h3>上線前檢查一遍</h3><p>一張清單：有沒有清楚說明信箱只會用來做什麼、能不能退訂、流量看不看得到——沒打勾的項目不能上線。</p></div>
-      <div class="step"><span class="step__num">六</span><h3>上線之後怎麼顧</h3><p>什麼時候該寄信保溫名單、什麼時候可以秀出「已經有多少人在等」、什麼訊號出現才值得再加新花樣，都先寫好判斷原則。</p></div>
+      <div class="step" data-reveal style="--i:0"><span class="step__num">一</span><h3>先問清楚</h3><p>動工前就把關鍵問題問完：要收在哪個網址、寄信用的網域準備好了沒、品牌顏色長怎樣、有哪些社群帳號要放上去。少走回頭路。</p></div>
+      <div class="step" data-reveal style="--i:1"><span class="step__num">二</span><h3>把頁面做出來</h3><p>一個收 email 的頁面，背後接一個不會弄丟名單的儲存系統，就算之後要接電子報服務，也是「錦上添花」而不是「沒接就會漏名單」。</p></div>
+      <div class="step" data-reveal style="--i:2"><span class="step__num">三</span><h3>擋住機器人</h3><p>三層機制擋住亂灌名單的程式和洗版行為，但不會誤擋真的想留信箱的人。</p></div>
+      <div class="step" data-reveal style="--i:1"><span class="step__num">四</span><h3>讓人放心分享</h3><p>分享到社群時有好看的預覽圖，成功留下信箱後，順手就能把連結轉發給同樣在等的朋友。</p></div>
+      <div class="step" data-reveal style="--i:2"><span class="step__num">五</span><h3>上線前檢查一遍</h3><p>一張清單：有沒有清楚說明信箱只會用來做什麼、能不能退訂、流量看不看得到——沒打勾的項目不能上線。</p></div>
+      <div class="step" data-reveal style="--i:3"><span class="step__num">六</span><h3>上線之後怎麼顧</h3><p>什麼時候該寄信保溫名單、什麼時候可以秀出「已經有多少人在等」、什麼訊號出現才值得再加新花樣，都先寫好判斷原則。</p></div>
     </div>
   </section>
 
   <section>
-    <div class="sec-head">
+    <div class="sec-head" data-reveal>
       <p class="eyebrow">成果長這樣</p>
       <h2>收信的頁面，和分享出去的樣子。</h2>
     </div>
-    <div class="mock">
-      <div class="mock-card">
+    <div class="mock" data-reveal>
+      <div class="mock-card" id="mockCard">
         <div class="mock-form">
           <small>候補名單頁面</small>
           <div class="mock-input">you@example.com</div>
@@ -195,20 +273,20 @@
   </section>
 
   <section>
-    <div class="sec-head">
+    <div class="sec-head" data-reveal>
       <p class="eyebrow">和「直接問 AI 做個表單」差在哪</p>
       <h2>三個不一樣的地方。</h2>
     </div>
     <div class="diffs">
-      <div class="diff">
+      <div class="diff" data-reveal style="--i:0">
         <span class="diff__mark">備</span>
         <div><h3>不是空白表單，是踩過坑的清單</h3><p>從一個真的上線過的產品裡，把踩過的坑（畫面沒更新成新版本、截圖尺寸不對、機器人繞過驗證）都先寫進流程，不用你重新踩一次。</p></div>
       </div>
-      <div class="diff">
+      <div class="diff" data-reveal style="--i:1">
         <span class="diff__mark">核</span>
         <div><h3>三個角色一起把關</h3><p>不只檢查「程式有沒有壞」，還有人專門看「文案有沒有講得太滿」、有人專門看「上線前這些事到底該不該擋」。</p></div>
       </div>
-      <div class="diff">
+      <div class="diff" data-reveal style="--i:2">
         <span class="diff__mark">續</span>
         <div><h3>證件還沒到位，也不會卡住你</h3><p>像人機驗證、流量分析這類要去對方網站申請才能拿到的東西，做法會先把位置留好；等你把證件補上，直接生效，不用為了等一組通行碼卡住整個上線進度。</p></div>
       </div>
@@ -216,11 +294,11 @@
   </section>
 
   <section id="install">
-    <div class="sec-head">
+    <div class="sec-head" data-reveal>
       <p class="eyebrow">開始使用</p>
       <h2>複製這段話，交給你的 AI。</h2>
     </div>
-    <div class="install-box">
+    <div class="install-box" data-reveal>
       <p class="install-box__label">把這段話貼給 Claude Code（或你慣用的 AI 助手）</p>
       <p class="prompt-text" id="promptText">請幫我安裝 <b>waitlist-launch</b> 這個技能（來源：GitHub 的 Heng-xiu/xiuxiu-agent-skills）。裝好之後，幫我把<b>〔你的產品名稱〕</b>做成一個候補名單頁面。</p>
       <button class="copy-btn" id="copyBtn" type="button">複製這段話</button>
@@ -229,12 +307,12 @@
   </section>
 
   <section class="origin">
-    <div class="sec-head">
+    <div class="sec-head" data-reveal>
       <p class="eyebrow">為什麼做這個</p>
       <h2>從一個真的要上線的產品裡長出來的。</h2>
     </div>
-    <p>這份流程不是憑空想出來的規則，是從一個真的要上線的機票比價工具裡整理出來的。頁面上線之後，我們又陸續追加了社群分享圖、防機器人機制、流量追蹤——每一步都先在真實的網站上跑過一次、真的上線過，才收進這個技能裡。</p>
-    <p>目標很單純：<b>下次要幫任何新產品做候補名單，不用重新發明一次流程，也不用重新踩一次同樣的坑。</b></p>
+    <p data-reveal>這份流程不是憑空想出來的規則，是從一個真的要上線的機票比價工具裡整理出來的。頁面上線之後，我們又陸續追加了社群分享圖、防機器人機制、流量追蹤——每一步都先在真實的網站上跑過一次、真的上線過，才收進這個技能裡。</p>
+    <p data-reveal style="--i:1">目標很單純：<b>下次要幫任何新產品做候補名單，不用重新發明一次流程，也不用重新踩一次同樣的坑。</b></p>
   </section>
 
   <footer>
@@ -253,6 +331,75 @@
       setTimeout(function(){ btn.textContent = '複製這段話'; }, 2000);
     });
   });
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // hero: reveal on load, then draw the underline under the highlighted phrase
+  var hero = document.getElementById('hero');
+  requestAnimationFrame(function(){
+    document.querySelectorAll('.hero [data-reveal]').forEach(function(el){ el.classList.add('is-visible'); });
+    setTimeout(function(){ hero.classList.add('is-loaded'); }, 260);
+  });
+
+  if (!reduceMotion && 'IntersectionObserver' in window) {
+    // scroll-triggered reveal for everything below the fold — fires once, then stops watching
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    Array.prototype.filter.call(document.querySelectorAll('[data-reveal]'), function(el){
+      return !hero.contains(el);
+    }).forEach(function(el){ io.observe(el); });
+
+    // fail-safe: never let content stay permanently hidden if IO doesn't fire
+    // (unusual viewport/compositor timing) — force-reveal anything still pending after 2.5s
+    setTimeout(function(){
+      document.querySelectorAll('[data-reveal]:not(.is-visible)').forEach(function(el){
+        el.classList.add('is-visible');
+      });
+    }, 2500);
+
+    // scroll progress — single passive listener, read coalesced into one rAF per frame
+    var progress = document.getElementById('progress');
+    var ticking = false;
+    function updateProgress(){
+      var h = document.documentElement;
+      var scrolled = h.scrollTop;
+      var max = h.scrollHeight - h.clientHeight;
+      var ratio = max > 0 ? scrolled / max : 0;
+      progress.style.transform = 'scaleX(' + ratio + ')';
+      ticking = false;
+    }
+    window.addEventListener('scroll', function(){
+      if (!ticking) { requestAnimationFrame(updateProgress); ticking = true; }
+    }, { passive: true });
+    updateProgress();
+
+    // mock card: subtle pointer-tracked tilt, desktop pointer devices only
+    var mockCard = document.getElementById('mockCard');
+    if (mockCard && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      mockCard.addEventListener('mousemove', function(e){
+        var r = mockCard.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width - 0.5;
+        var py = (e.clientY - r.top) / r.height - 0.5;
+        mockCard.style.setProperty('--ry', (px * 6).toFixed(2) + 'deg');
+        mockCard.style.setProperty('--rx', (py * -6).toFixed(2) + 'deg');
+      });
+      mockCard.addEventListener('mouseleave', function(){
+        mockCard.style.setProperty('--rx', '0deg');
+        mockCard.style.setProperty('--ry', '0deg');
+      });
+    }
+  } else {
+    // reduced motion or no IO support: everything is already visible via the CSS fallback
+    document.querySelectorAll('[data-reveal]').forEach(function(el){ el.classList.add('is-visible'); });
+    var progressFallback = document.getElementById('progress');
+    if (progressFallback) progressFallback.style.display = 'none';
+  }
 </script>
 </body>
 </html>
