@@ -25,6 +25,13 @@
       "skills": [
         "content-pipeline"
       ]
+    },
+    {
+      "title": "Growth",
+      "description": "Skills for launching and growing products: waitlists and audience building.",
+      "skills": [
+        "waitlist-launch"
+      ]
     }
   ]
 }

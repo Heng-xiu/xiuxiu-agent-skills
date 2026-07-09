@@ -25,6 +25,7 @@ This repository currently includes:
 - `know-your-unknowns`: Surface the unknowns in a coding task before, during, and after implementation — blindspot scan, blast-radius interview, decision log, and a pre-merge comprehension quiz, each emitting a self-contained HTML artifact.
 - `portfolio-forge`: Forge personal information into a beautiful, production-ready personal website — content doc as single source of truth, per-section reference images, adversarial design review, high-fidelity replication, headless per-section QA, and reversible deployment. Also published standalone with a promo page at [heng-xiu.github.io/portfolio-forge](https://heng-xiu.github.io/portfolio-forge/).
 - `site-teardown`: Tear down any website (single site or a series) into a five-layer structured record — visual design, layout, features, tech stack, and service integrations. Full-page Playwright screenshots (desktop + mobile, scroll-triggered animations handled), source-code verification over author claims, per-site markdown records, a cross-site DESIGN-SYSTEM.md, and an annotated "red-ink teardown notes" HTML artifact for discussion. Landing page: [heng-xiu.github.io/xiuxiu-agent-skills/site-teardown](https://heng-xiu.github.io/xiuxiu-agent-skills/site-teardown/).
+- `waitlist-launch`: Build and launch a waitlist site for any product from scratch — signup form backed by a durable store, best-effort email-list sync, three-layer abuse defense that avoids unnecessary writes, a social share card, a post-signup referral loop, privacy-safe analytics, and a pre-launch gate checklist. Includes copywriting formulas and a channel playbook distilled from a real launch. Landing page: [heng-xiu.github.io/xiuxiu-agent-skills/waitlist-launch](https://heng-xiu.github.io/xiuxiu-agent-skills/waitlist-launch/).
 
 ## Skill Landing Pages
 
@@ -54,7 +55,7 @@ Then, to install a specific set of skills:
 
 1. Select `Browse and install plugins`.
 2. Select `xiuxiu-agent-skills`.
-3. Select `engineering-skills` or `content-skills`.
+3. Select `engineering-skills`, `content-skills`, or `growth-skills`.
 4. Select `Install now`.
 
 Alternatively, directly install the plugin via:
@@ -67,7 +68,11 @@ Alternatively, directly install the plugin via:
 /plugin install content-skills@xiuxiu-agent-skills
 ```
 
-After installing the plugin, you can use the skill by mentioning it. For instance: "Use the delegation-review skill to review all open issues for autonomous handoff readiness." Or: "Use content-pipeline to turn this rough idea into FB, Threads, IG, X, and Xiaohongshu drafts." Or: "Use verify-ai-server-with-device-env to check if my Docker inference server will run on this GPU machine." Or: "Use know-your-unknowns to find my blindspots before I start this change." Or: "Use portfolio-forge to turn my profile into a personal website."
+```text
+/plugin install growth-skills@xiuxiu-agent-skills
+```
+
+After installing the plugin, you can use the skill by mentioning it. For instance: "Use the delegation-review skill to review all open issues for autonomous handoff readiness." Or: "Use content-pipeline to turn this rough idea into FB, Threads, IG, X, and Xiaohongshu drafts." Or: "Use verify-ai-server-with-device-env to check if my Docker inference server will run on this GPU machine." Or: "Use know-your-unknowns to find my blindspots before I start this change." Or: "Use portfolio-forge to turn my profile into a personal website." Or: "Use waitlist-launch to build and ship a waitlist page for my new product."
 
 ## Codex and other agents
 
@@ -95,6 +100,10 @@ npx skills add https://github.com/Heng-xiu/xiuxiu-agent-skills/tree/main/skills/
 npx skills add https://github.com/Heng-xiu/xiuxiu-agent-skills/tree/main/skills/know-your-unknowns
 ```
 
+```bash
+npx skills add https://github.com/Heng-xiu/xiuxiu-agent-skills/tree/main/skills/waitlist-launch
+```
+
 Install globally for Codex:
 
 ```bash
@@ -111,6 +120,10 @@ npx skills add Heng-xiu/xiuxiu-agent-skills --skill verify-ai-server-with-device
 
 ```bash
 npx skills add Heng-xiu/xiuxiu-agent-skills --skill know-your-unknowns --global --agent codex
+```
+
+```bash
+npx skills add Heng-xiu/xiuxiu-agent-skills --skill waitlist-launch --global --agent codex
 ```
 
 # Creating a Basic Skill
