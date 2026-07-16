@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>shot-annotate — 把要登入的後台，拍成有紅筆標注的圖解說明書</title>
+<meta name="description" content="shot-annotate 是一個 AI 技能：AI 平常拍不到你「登入後」的管理後台。這個技能讓它用你自己的瀏覽器拍下真實畫面、圈出重點、寫上說明，做成一本看得懂的圖解說明書。">
+<meta property="og:title" content="shot-annotate — 後台實拍標注技能">
+<meta property="og:description" content="把要登入的後台，拍成有紅筆標注的圖解說明書。">
+<style>
+  :root{
+    --paper:#F0EDEE; --paper-raised:#FAF7F8; --paper-sunken:#E2DDDF;
+    --ink:#1B181A; --mute:#6F686C; --mute-2:#8D858A;
+    --line:#D2CBCE; --line-strong:#ABA2A6;
+    --pin:#B0306B; --pin-ink:#93265A; --pin-soft:rgba(176,48,107,.09);
+    --steel:#3C5A72; --steel-soft:rgba(60,90,114,.10);
+    --serif:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP","Noto Serif TC",serif;
+    --sans:"Hiragino Sans","Noto Sans JP","PingFang TC","Microsoft JhengHei",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#171416; --paper-raised:#1F1B1E; --paper-sunken:#100E0F;
+      --ink:#EAE4E7; --mute:#9C9298; --mute-2:#7D7378;
+      --line:#362F33; --line-strong:#4C4348;
+      --pin:#E06BA5; --pin-ink:#EE86B8; --pin-soft:rgba(224,107,165,.12);
+      --steel:#8FB2CC; --steel-soft:rgba(143,178,204,.13);
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:linear-gradient(var(--line) 1px, transparent 1px) 0 0/100% 44px, var(--paper);
+    color:var(--ink); font-family:var(--sans); line-height:1.8;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--steel);}
+  a:focus-visible, .gh-corner:focus-visible, .copy-btn:focus-visible{outline:2px solid var(--steel); outline-offset:3px;}
+  h1,h2,h3{font-family:var(--serif); font-weight:400; text-wrap:balance; margin:0;}
+  p{margin:0;}
+  .wrap{max-width:880px; margin:0 auto; padding:0 24px;}
+
+  .gh-corner{position:fixed; top:16px; right:16px; z-index:10; opacity:.55; transition:opacity .2s;}
+  .gh-corner:hover{opacity:1;}
+  .gh-corner svg{width:26px; height:26px; fill:var(--ink); display:block;}
+
+  .hero{padding:110px 0 64px;}
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--pin); display:flex; align-items:center; gap:10px; margin-bottom:24px;
+  }
+  .eyebrow::before{content:""; width:22px; height:1px; background:var(--pin);}
+  .hero h1{font-size:clamp(32px,5.6vw,52px); line-height:1.35; margin-bottom:26px;}
+  .hero h1 em{font-style:normal; color:var(--pin); border-bottom:2px solid var(--pin);}
+  .lede{font-size:16px; color:var(--mute); max-width:36em; margin-bottom:36px;}
+  .cta-row{display:flex; gap:14px; flex-wrap:wrap;}
+  .btn{
+    display:inline-block; text-decoration:none; font-size:14px; padding:13px 26px;
+    border:1px solid var(--ink); color:var(--ink); background:var(--paper-raised);
+    transition:background .2s;
+  }
+  .btn:hover{background:var(--paper-sunken);}
+  .btn--primary{background:var(--pin); border-color:var(--pin); color:#FFF;}
+  .btn--primary:hover{background:var(--pin-ink);}
+
+  section{padding:56px 0;}
+  .sec-head{margin-bottom:36px;}
+  .sec-head .eyebrow{color:var(--steel);}
+  .sec-head .eyebrow::before{background:var(--steel);}
+  .sec-head h2{font-size:clamp(24px,3.6vw,32px);}
+
+  .layers{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line);}
+  .layer{background:var(--paper); padding:24px;}
+  @media (max-width:560px){ .layers{grid-template-columns:1fr;} }
+  .layer__num{font-family:var(--serif); font-style:italic; font-size:26px; color:var(--pin); display:block; margin-bottom:10px;}
+  .layer h3{font-size:17px; margin-bottom:10px;}
+  .layer p{font-size:13.5px; color:var(--mute);}
+
+  /* annotated screenshot mock */
+  .mock{border-top:1px solid var(--line-strong); border-bottom:1px solid var(--line-strong); padding:40px 0; margin-top:8px;}
+  .mock-frame{max-width:620px; margin:0 auto; background:var(--paper-raised); border:1px solid var(--line-strong); box-shadow:0 1px 3px rgba(0,0,0,.06);}
+  .mock-bar{display:flex; gap:6px; padding:10px 14px; border-bottom:1px solid var(--line);}
+  .mock-bar i{width:9px; height:9px; border-radius:50%; background:var(--line-strong); display:block;}
+  .mock-body{position:relative; padding:22px;}
+  .mock-ui{display:grid; grid-template-columns:120px 1fr; gap:14px;}
+  @media (max-width:480px){ .mock-ui{grid-template-columns:70px 1fr;} }
+  .mock-nav{display:flex; flex-direction:column; gap:8px;}
+  .mock-nav i{height:10px; background:var(--paper-sunken); display:block;}
+  .mock-nav i:nth-child(2){background:var(--steel-soft); outline:1px solid var(--steel);}
+  .mock-main .row{height:12px; background:var(--paper-sunken); margin-bottom:10px;}
+  .mock-main .row.short{width:55%;}
+  .mock-main .chip{
+    display:inline-block; font-family:var(--mono); font-size:10px; color:var(--pin-ink);
+    background:var(--pin-soft); border:1px solid var(--pin); padding:3px 10px; margin:4px 0 12px;
+  }
+  .mpin{
+    position:absolute; width:22px; height:22px; border-radius:50%;
+    background:var(--pin); color:#FFF; font-family:var(--mono); font-size:12px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 0 3px var(--paper-raised);
+  }
+  .mock-caption{text-align:center; font-size:12.5px; color:var(--mute-2); margin-top:18px;}
+  .mock-legend{max-width:620px; margin:16px auto 0; font-size:13.5px; color:var(--mute); display:grid; gap:6px;}
+  .mock-legend b{color:var(--pin);}
+
+  .diffs{display:grid; gap:0; border-top:1px solid var(--line);}
+  .diff{display:grid; grid-template-columns:32px 1fr; gap:16px; padding:22px 0; border-bottom:1px solid var(--line);}
+  .diff__mark{
+    font-family:var(--serif); font-size:13px; color:var(--pin); border:1.5px solid var(--pin); border-radius:50%;
+    width:28px; height:28px; display:flex; align-items:center; justify-content:center; transform:rotate(-8deg); flex:none; margin-top:2px;
+  }
+  .diff h3{font-size:16.5px; margin-bottom:6px;}
+  .diff p{font-size:14px; color:var(--mute); max-width:40em;}
+
+  .install-box{background:var(--paper-raised); border:1px solid var(--line-strong); padding:26px;}
+  .install-box__label{font-family:var(--mono); font-size:11px; color:var(--steel); text-transform:uppercase; letter-spacing:.08em; margin-bottom:14px;}
+  .prompt-text{
+    font-size:15px; line-height:2; background:var(--paper); border:1px dashed var(--line-strong);
+    padding:18px 20px; margin-bottom:14px; user-select:all;
+  }
+  .prompt-text b{color:var(--pin-ink);}
+  .copy-btn{
+    font-family:var(--mono); font-size:12px; padding:9px 18px; cursor:pointer;
+    border:1px solid var(--ink); background:var(--paper); color:var(--ink);
+  }
+  .copy-btn:hover{background:var(--paper-sunken);}
+  .install-alt{font-size:12px; color:var(--mute-2); margin-top:16px;}
+  .install-alt code{font-family:var(--mono); font-size:11px; background:var(--paper-sunken); padding:2px 6px;}
+
+  .origin p{font-size:14.5px; color:var(--mute); max-width:42em; margin-bottom:14px;}
+  .origin p b{color:var(--ink);}
+
+  footer{
+    border-top:1px solid var(--line-strong); margin-top:40px; padding:30px 0 60px;
+    font-family:var(--mono); font-size:11px; color:var(--mute-2);
+    display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap;
+  }
+  footer a{color:var(--mute-2);}
+</style>
+</head>
+<body>
+
+<a class="gh-corner" href="https://github.com/Heng-xiu/xiuxiu-agent-skills" aria-label="GitHub 原始碼" title="GitHub">
+  <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+</a>
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="eyebrow">AI 的技能 · shot-annotate</p>
+    <h1>把要登入的後台，<br>拍成一本<em>有紅筆標注的圖解說明書</em>。</h1>
+    <p class="lede">你問 AI「這個管理後台怎麼用」，它只能憑印象畫示意圖——因為要登入的頁面，它根本看不到。這個技能讓 AI 借用你自己的瀏覽器（你本來就登入著），拍下真實畫面、圈出重點按鈕、一句話說明每個該注意的地方。</p>
+    <div class="cta-row">
+      <a class="btn btn--primary" href="#install">開始使用</a>
+      <a class="btn" href="#what">它怎麼運作</a>
+    </div>
+  </header>
+
+  <section id="what">
+    <div class="sec-head">
+      <p class="eyebrow">四個步驟</p>
+      <h2>從「看不到」到「一頁一頁講給你聽」。</h2>
+    </div>
+    <div class="layers">
+      <div class="layer"><span class="layer__num">一</span><h3>用你的瀏覽器拍</h3><p>不跟你要帳號密碼——你平常用的瀏覽器本來就登入著，AI 只負責「翻頁和按快門」。拍的範圍刻意避開你的其他分頁，只拍該拍的畫面。</p></div>
+      <div class="layer"><span class="layer__num">二</span><h3>每一張都驗過</h3><p>拍完 AI 會親眼檢查每張圖：拍到轉圈圈的載入畫面、拍錯頁、拍成黑屏，都會重拍。沒驗過的圖不會出現在成品裡。</p></div>
+      <div class="layer"><span class="layer__num">三</span><h3>圈出重點、寫上說明</h3><p>在截圖上釘出編號小紅點：這顆按鈕做什麼、哪個開關按下去收不回來、你的下一步在哪裡——像老師用紅筆批註課本。</p></div>
+      <div class="layer"><span class="layer__num">四</span><h3>發現錯誤就明說</h3><p>真實畫面常跟 AI 的印象不一樣（介面改版了、功能搬家了）。對不上的地方會誠實寫進「勘誤」，不會假裝一直都是對的。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <p class="eyebrow">成果長這樣</p>
+      <h2>一本可以邊看邊操作的說明書。</h2>
+    </div>
+    <div class="mock">
+      <div class="mock-frame">
+        <div class="mock-bar"><i></i><i></i><i></i></div>
+        <div class="mock-body">
+          <div class="mock-ui">
+            <div class="mock-nav"><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="mock-main">
+              <div class="row short"></div>
+              <span class="chip">Draft</span>
+              <div class="row"></div>
+              <div class="row"></div>
+              <div class="row short"></div>
+            </div>
+          </div>
+          <span class="mpin" style="left:16%; top:34%;">1</span>
+          <span class="mpin" style="left:44%; top:47%;">2</span>
+          <span class="mpin" style="right:8%; top:22%;">3</span>
+        </div>
+      </div>
+      <div class="mock-legend">
+        <span><b>①</b> 你現在在的分頁——這裡管理所有名單。</span>
+        <span><b>②</b> Draft 代表「還沒寄出」，不按送出它永遠停在這。</span>
+        <span><b>③</b> 這顆按下去就收不回來——寄出前的最後一關。</span>
+      </div>
+      <p class="mock-caption">每張實拍圖配編號說明；拍不到的未來功能用示意圖，並誠實標示「示意」。</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <p class="eyebrow">和「直接問 AI」差在哪</p>
+      <h2>三個不一樣的地方。</h2>
+    </div>
+    <div class="diffs">
+      <div class="diff">
+        <span class="diff__mark">真</span>
+        <div><h3>拍的是你的畫面，不是想像圖</h3><p>AI 憑記憶畫的介面常常過時。這裡的每張圖都是你後台當下的真實模樣，數字、按鈕、位置都對得上。</p></div>
+      </div>
+      <div class="diff">
+        <span class="diff__mark">私</span>
+        <div><h3>帳密和個資都把過關</h3><p>登入這件事永遠由你自己完成；截圖避開你的其他分頁；發佈前逐張檢查有沒有別人的信箱和個資。</p></div>
+      </div>
+      <div class="diff">
+        <span class="diff__mark">誤</span>
+        <div><h3>敢認錯</h3><p>真實畫面對出 AI 先前講錯的地方，會寫成顯眼的勘誤區——這常常是整份文件最有價值的一段。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="sec-head">
+      <p class="eyebrow">開始使用</p>
+      <h2>複製這段話，交給你的 AI。</h2>
+    </div>
+    <div class="install-box">
+      <p class="install-box__label">把這段話貼給 Claude Code（或你慣用的 AI 助手）</p>
+      <p class="prompt-text" id="promptText">請幫我安裝 <b>shot-annotate</b> 這個技能（來源：GitHub 的 Heng-xiu/xiuxiu-agent-skills）。裝好之後，用它幫我把這個後台拍成圖解說明書：<b>〔說出你想講解的後台，例如「我的電子報後台」〕</b></p>
+      <button class="copy-btn" id="copyBtn" type="button">複製這段話</button>
+      <p class="install-alt">習慣終端機的人也可以直接執行：<code>npx skills add Heng-xiu/xiuxiu-agent-skills --skill shot-annotate</code>（目前支援 macOS）</p>
+    </div>
+  </section>
+
+  <section class="origin">
+    <div class="sec-head">
+      <p class="eyebrow">為什麼做這個</p>
+      <h2>從一句「你為什麼不能截圖？」開始。</h2>
+    </div>
+    <p>有一次請 AI 講解一個電子報後台，它畫了一份很漂亮的示意圖——結果對照真實介面，三個地方是錯的：功能搬家了、開關長得不一樣、數字也不準。</p>
+    <p>問題出在 AI 根本看不到登入後的畫面，只能靠記憶想像。這個技能把那次踩坑變成一套<b>每次都一樣紮實</b>的流程：用你的瀏覽器拍真圖、每張驗過、圈重點、把對不上的地方誠實寫成勘誤——說明書從「大概是這樣」變成「就是這樣」。</p>
+  </section>
+
+  <footer>
+    <span>shot-annotate · 出自 <a href="../">xiuxiu-agent-skills</a></span>
+    <a href="https://github.com/Heng-xiu/xiuxiu-agent-skills/tree/main/skills/shot-annotate">GitHub 上的原始碼</a>
+  </footer>
+
+</div>
+
+<script>
+  document.getElementById('copyBtn').addEventListener('click', function(){
+    var text = '請幫我安裝 shot-annotate 這個技能（來源：GitHub 的 Heng-xiu/xiuxiu-agent-skills）。裝好之後，用它幫我把這個後台拍成圖解說明書：〔說出你想講解的後台，例如「我的電子報後台」〕';
+    navigator.clipboard.writeText(text).then(function(){
+      var btn = document.getElementById('copyBtn');
+      btn.textContent = '已複製 ✓';
+      setTimeout(function(){ btn.textContent = '複製這段話'; }, 2000);
+    });
+  });
+</script>
+</body>
+</html>
